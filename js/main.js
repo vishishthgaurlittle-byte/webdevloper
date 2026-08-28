@@ -105,12 +105,12 @@ if(canvas){
   });
 }
 
-// Work Grid Data - With Transitions & Materials (as requested)
+// Work Grid Data - With Transitions & Materials - Pricing 4000-9000
 const demos = [
   { 
     id: 'depth-parallax', title: '3D Depth Parallax', tag: 'MOST LOVED — 3 LAYERS', 
     desc: 'Foreground, mid, background moving at different speeds with perspective origin shift.',
-    color: 'bg-lime', complexity: 'Medium', price: '₹29,999', preview: 'depth',
+    color: 'bg-lime', complexity: 'Medium', price: '₹4,000', preview: 'depth',
     transition: 'Parallax Y (0.2x / 0.5x / 1.2x) + Scale 1→1.2 + Opacity 0→1 + RotateZ 0→15°',
     materials: ['GSAP 3.12.5', 'ScrollTrigger', 'Lenis Smooth 1.1.18', 'CSS 3D perspective', 'will-change: transform', 'Perspective 1000px'],
     code: 'gsap.to(layer, { y: -speed*400, scale: 1+progress*0.2, scrub: 1 })',
@@ -120,7 +120,7 @@ const demos = [
   { 
     id: 'horizontal', title: 'Horizontal Journey', tag: 'APPLE STYLE — HORIZONTAL SCROLL',
     desc: 'Vertical scroll drives horizontal track. Pin + scrub like Apple AirPods page.',
-    color: 'bg-violet', complexity: 'Advanced', price: '₹39,999', preview: 'horizontal',
+    color: 'bg-violet', complexity: 'Advanced', price: '₹6,500', preview: 'horizontal',
     transition: 'Pin section 100vh + x: -(trackWidth - viewport) + scrub 1 + anticipatePin + Snap 0.2',
     materials: ['GSAP ScrollTrigger Pin', 'Lenis', 'Horizontal Track 300vw', 'CSS Flex w-max', 'transform: translateX', 'Apple Easing [0.76,0,0.24,1]'],
     code: 'gsap.to(track, { x: -(width - win), scrollTrigger: { pin:true, scrub:1 } })',
@@ -130,7 +130,7 @@ const demos = [
   { 
     id: 'stack', title: 'Sticky Stack', tag: 'HIGH CONVERTING — SAAS FAVORITE',
     desc: 'Cards stack and stick with scale + blur + brightness. Perfect for SaaS features.',
-    color: 'bg-white', complexity: 'Medium', price: '₹29,999', preview: 'stack',
+    color: 'bg-white', complexity: 'Medium', price: '₹5,000', preview: 'stack',
     transition: 'Sticky top 28→44 + Scale 0.9→1 + Blur 10px→0 + Brightness 0.8→1 + y 100→0 + stagger 0.1',
     materials: ['GSAP', 'ScrollTrigger Sticky', 'CSS backdrop-filter blur', 'Scale Transform', 'Lenis', 'Tailwind glass'],
     code: 'gsap.fromTo(card, {scale:0.9, y:100}, {scale:1, y:0, scrub:true})',
@@ -140,7 +140,7 @@ const demos = [
   { 
     id: 'reveal', title: 'Image Reveal Warp', tag: 'EDITORIAL — AWWWARDS WINNER',
     desc: 'Clip-path polygon reveal + scale + RGB split + warp. Editorial magazine feel.',
-    color: 'bg-paper', complexity: 'Advanced', price: '₹34,999', preview: 'reveal',
+    color: 'bg-paper', complexity: 'Advanced', price: '₹5,500', preview: 'reveal',
     transition: 'clip-path: polygon(0% 100% → 0% 0%) + Scale 1.3→1 + RGB split 10px + Warp skew 10°→0 + Opacity',
     materials: ['GSAP', 'clip-path CSS', 'filter: blur + contrast', 'mix-blend-mode', 'RGB Split Shader', 'Lenis + SplitText'],
     code: 'gsap.to(img, { clipPath: "polygon(0% 0%,100% 0%,100% 100%,0% 100%)", scale:1 })',
@@ -150,7 +150,7 @@ const demos = [
   { 
     id: 'morph', title: 'WebGL Morph Blob', tag: 'WEBGL — SHADERS • ULTRA',
     desc: 'Liquid blob morphing driven by scroll progress. Three.js + custom shaders.',
-    color: 'bg-ink', complexity: 'Ultra', price: '₹89,999', preview: 'morph', dark: true,
+    color: 'bg-ink', complexity: 'Ultra', price: '₹9,000', preview: 'morph', dark: true,
     transition: 'Three.js ShaderMaterial + Uniform uProgress (0→1) + Vertex displacement + Fragment RGB shift + Torus rotation',
     materials: ['Three.js r128', 'WebGLRenderer', 'ShaderMaterial', 'TorusGeometry + Icosahedron', 'GLSL vertex/fragment', 'GSAP scrub → shader uniform', 'PointsMaterial particles 800'],
     code: 'material.uniforms.uProgress.value = scrollProgress; torus.rotation.z = progress*PI*2',
@@ -160,7 +160,7 @@ const demos = [
   { 
     id: 'text-warp', title: 'Kinetic Text Warp', tag: 'TYPO OBSESSED — VIRAL',
     desc: 'Letters warp, stretch, pin, blur. ScrollTrigger + SplitText for viral typography.',
-    color: 'bg-[#FF5A1F]', complexity: 'Medium', price: '₹27,999', preview: 'text',
+    color: 'bg-[#FF5A1F]', complexity: 'Medium', price: '₹4,500', preview: 'text',
     transition: 'SplitText chars + y 100%→0 + rotateX 90°→0 + scaleY 0→1 + blur 20px→0 + stagger 0.02 + Pin text 50vh',
     materials: ['GSAP SplitText', 'ScrollTrigger Pin', 'CSS transform-origin', 'filter: blur', 'Syne Font 800', 'Lenis + perspective'],
     code: 'gsap.fromTo(chars, {y:"100%", rotateX:90}, {y:"0%", rotateX:0, stagger:0.02, scrub:1})',
@@ -314,11 +314,11 @@ function getPromos(){
 function updateTotal() {
   let base = 0;
   const pkg = document.querySelector('input[name="package"]:checked')?.value;
-  if (pkg === 'starter') base = 29999;
-  if (pkg === 'pro') base = 59999;
-  if (pkg === 'ultra') base = 119999;
+  if (pkg === 'starter') base = 4000;
+  if (pkg === 'pro') base = 6500;
+  if (pkg === 'ultra') base = 9000;
   const extras = document.querySelectorAll('input[name="styles"]:checked').length;
-  let total = base + Math.max(0, extras-1)*3000;
+  let total = base + Math.max(0, extras-1)*500;
 
   // Apply promo if any
   const offerInput = document.querySelector('input[name="offerCode"]');
