@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Track Order — KAATYA WEB DEVELOPER</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Syne:wght@700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{fontFamily:{syne:['Syne'],space:['Space Grotesk'],mono:['JetBrains Mono']},colors:{ink:'#0A0A0B',lime:'#D6FF57',violet:'#8A5CFF',paper:'#F5F3EF'}}}}</script>
+<style>body{background:#F5F3EF; color:#0A0A0B}</style>
+</head>
+<body class="font-space">
+<div class="min-h-screen flex flex-col">
+  <nav class="p-6 md:p-10 flex justify-between items-center border-b border-black/10">
+    <div class="flex items-center gap-3"><div class="w-9 h-9 bg-ink text-paper grid place-items-center font-syne font-800 rounded">K</div><div><div class="font-syne font-800">KAATYA WEB DEVELOPER</div><div class="font-mono text-[10px] opacity-60">Near Ganesh Hotel, Raebareli • vishishthgaurlittle@gmail.com</div></div></div>
+    <a href="index.html" class="px-4 py-2 border border-black/15 rounded-full font-mono text-[11px]">← BACK TO SITE</a>
+  </nav>
+
+  <main class="flex-1 p-6 md:p-10 max-w-[800px] mx-auto w-full">
+    <div id="track-search" class="text-center py-20">
+      <h1 class="font-syne font-800 text-[40px] leading-[0.9]">Track Your Order</h1>
+      <p class="font-mono text-[11px] opacity-60 mt-3">Order no (KAATYA-… / QG-…) ya track link daaliye</p>
+      <div class="mt-8 flex gap-3 max-w-[400px] mx-auto">
+        <input id="track-input" placeholder="e.g. KAATYA-AB12C" class="flex-1 p-4 border border-black/15 rounded-xl font-mono">
+        <button onclick="trackOrder()" class="px-6 py-4 bg-ink text-paper rounded-xl font-mono text-[11px] font-700">TRACK ▸</button>
+      </div>
+      <div class="mt-6 font-mono text-[10px] opacity-50">Personal track link aapko WhatsApp/Email pe mila hoga</div>
+    </div>
+
+    <div id="track-result" class="hidden">
+      <div class="flex justify-between items-start">
+        <div><div class="font-mono text-[11px] tracking-widest opacity-60">ORDER TRACKING — KAATYA STUDIO</div><h1 id="track-id" class="font-syne font-800 text-[36px] mt-2">KAATYA-XXXXX</h1><div id="track-date" class="font-mono text-[11px] opacity-60 mt-1"></div></div>
+        <div class="text-right"><div id="track-status-badge" class="px-4 py-2 rounded-full font-mono text-[11px] font-700">STATUS</div><div id="track-amount" class="font-syne font-800 text-2xl mt-3">₹0</div></div>
+      </div>
+
+      <div class="mt-10">
+        <div class="font-mono text-[11px] tracking-widest">PROGRESS — Kab taiyaar hai?</div>
+        <div class="mt-4 relative">
+          <div class="absolute top-5 left-5 right-5 h-[2px] bg-black/10"></div>
+          <div id="progress-line" class="absolute top-5 left-5 h-[2px] bg-lime transition-all duration-700" style="width:0%"></div>
+          <div class="relative grid grid-cols-4 gap-2">
+            <div class="text-center"><div id="step-1-dot" class="w-10 h-10 rounded-full bg-ink text-paper grid place-items-center mx-auto font-700">1</div><div class="font-mono text-[10px] mt-2 font-700">Payment</div><div class="font-mono text-[9px] opacity-60">UPI 8957288848@fam</div></div>
+            <div class="text-center"><div id="step-2-dot" class="w-10 h-10 rounded-full border border-black/15 grid place-items-center mx-auto">2</div><div class="font-mono text-[10px] mt-2">Work Started</div><div class="font-mono text-[9px] opacity-60">Design + Code</div></div>
+            <div class="text-center"><div id="step-3-dot" class="w-10 h-10 rounded-full border border-black/15 grid place-items-center mx-auto">3</div><div class="font-mono text-[10px] mt-2">Ready</div><div class="font-mono text-[9px] opacity-60">Review link</div></div>
+            <div class="text-center"><div id="step-4-dot" class="w-10 h-10 rounded-full border border-black/15 grid place-items-center mx-auto">4</div><div class="font-mono text-[10px] mt-2">Delivered</div><div class="font-mono text-[9px] opacity-60">Live + Invoice</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-10 grid md:grid-cols-2 gap-6">
+        <div class="bg-white border border-black/10 rounded-[24px] p-6">
+          <div class="font-mono text-[11px] tracking-widest">ORDER DETAILS</div>
+          <div id="track-details" class="mt-4 space-y-3 font-space text-[14px]"></div>
+        </div>
+        <div class="bg-ink text-paper rounded-[24px] p-6">
+          <div class="font-mono text-[11px] tracking-widest opacity-60">PAYMENT & CONTACT</div>
+          <div class="mt-4 space-y-3">
+            <div class="flex gap-3 items-center"><img src="upi-qr-white.png" class="w-16 h-16 rounded-xl bg-white p-1"><div><div class="font-mono text-[11px] font-700">UPI: 8957288848@fam</div><div class="font-mono text-[10px] opacity-60">KAATYA WEB DEVELOPER<br>Pay ₹200 advance if pending</div></div></div>
+            <div class="pt-4 border-t border-white/10 font-mono text-[11px] space-y-1"><div>✉️ vishishthgaurlittle@gmail.com</div><div>📸 Insta: @_kaatya_og_</div><div>📍 Near Ganesh Hotel, Raebareli UP</div></div>
+            <div class="mt-4 p-3 bg-lime text-ink rounded-xl font-mono text-[11px]">💬 WhatsApp: Message will have this track link — customer khud track karega, calls band!</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-8 p-6 bg-lime/20 rounded-[24px] flex gap-4 items-start">
+        <div class="w-10 h-10 bg-ink text-paper rounded-full grid place-items-center shrink-0">💡</div>
+        <div><div class="font-syne font-700">What next?</div><div id="track-next" class="font-space text-[14px] mt-2 opacity-80"></div></div>
+      </div>
+
+      <div class="mt-8 text-center"><button onclick="document.getElementById('track-search').classList.remove('hidden'); document.getElementById('track-result').classList.add('hidden')" class="px-6 py-3 border border-black/15 rounded-full font-mono text-[11px]">TRACK ANOTHER ORDER</button></div>
+    </div>
+
+    <div id="track-notfound" class="hidden text-center py-20"><div class="font-syne font-800 text-3xl opacity-30">Order nahi mila</div><div class="font-mono text-[11px] opacity-60 mt-2">Order no check kijiye — KAATYA-… ya QG-… format</div><button onclick="document.getElementById('track-search').classList.remove('hidden'); document.getElementById('track-notfound').classList.add('hidden')" class="mt-6 px-6 py-3 bg-ink text-paper rounded-full font-mono text-[11px]">TRY AGAIN</button></div>
+  </main>
+
+  <footer class="p-6 border-t border-black/10 text-center font-mono text-[10px] opacity-60">KAATYA WEB DEVELOPER • Near Ganesh Hotel, Raebareli UP 229001 • vishishthgaurlittle@gmail.com • Insta @_kaatya_og_ • UPI 8957288848@fam</footer>
+</div>
+
+<script src="js/insforge.js"></script>
+<script>
+function getOrders(){ return JSON.parse(localStorage.getItem('kaatya_orders_v2')||localStorage.getItem('scrollcraft_orders')||'[]'); }
+
+async function trackOrder(){
+  const input = document.getElementById('track-input').value.trim() || new URLSearchParams(location.search).get('id') || new URLSearchParams(location.search).get('track');
+  if(!input){ alert('Order ID daaliye'); return; }
+  let searchId = input;
+  try{ if(input.includes('http')){ const u=new URL(input); searchId=u.searchParams.get('id')||u.searchParams.get('track')||input; } }catch(e){}
+  searchId = searchId.split('/').pop().split('?')[0].trim();
+  
+  let orders = getOrders();
+  let o = orders.find(x=>x.id.toLowerCase()===searchId.toLowerCase() || x.id.toLowerCase().includes(searchId.toLowerCase()));
+  
+  // Try backend if not found locally
+  if(!o && window.KaatyaBackend) {
+    try {
+      const backendOrders = await window.KaatyaBackend.getOrders();
+      if(backendOrders) {
+        const backendOrder = backendOrders.find(x=>x.id.toLowerCase()===searchId.toLowerCase() || x.id.toLowerCase().includes(searchId.toLowerCase()));
+        if(backendOrder) {
+          o = {
+            id: backendOrder.id,
+            date: backendOrder.created_at,
+            name: backendOrder.name,
+            email: backendOrder.email,
+            company: backendOrder.company,
+            websiteType: backendOrder.website_type,
+            package: backendOrder.package,
+            styles: backendOrder.styles || [],
+            references: backendOrder.ref_links,
+            vision: backendOrder.vision,
+            budget: backendOrder.budget,
+            timeline: backendOrder.timeline,
+            total: backendOrder.total,
+            status: backendOrder.status,
+            paymentStatus: backendOrder.payment_status,
+            paymentProof: backendOrder.payment_proof,
+            offerCode: backendOrder.offer_code,
+            trackLink: backendOrder.track_link
+          };
+          console.log('✅ Found order in backend:', o.id);
+        }
+      }
+    } catch(e) { console.warn('Backend track failed', e); }
+  }
+  
+  if(!o){ document.getElementById('track-search').classList.add('hidden'); document.getElementById('track-notfound').classList.remove('hidden'); return; }
+
+  document.getElementById('track-search').classList.add('hidden');
+  document.getElementById('track-notfound').classList.add('hidden');
+  document.getElementById('track-result').classList.remove('hidden');
+
+  document.getElementById('track-id').textContent = o.id;
+  document.getElementById('track-date').textContent = new Date(o.date).toLocaleString() + (o.offerCode?` • Coupon: ${o.offerCode}`:'');
+  document.getElementById('track-amount').textContent = o.total;
+  const statusBadge = document.getElementById('track-status-badge');
+  const statusText = {needs_action:'PAYMENT PENDING', pending_proof:'PAYMENT REVIEW', new:'PAYMENT PENDING', approved:'WORK STARTED', in_progress:'IN PROGRESS', active:'IN PROGRESS', ready:'READY FOR REVIEW', closed:'DELIVERED', delivered:'DELIVERED'};
+  statusBadge.textContent = statusText[o.status]||o.status.toUpperCase();
+  statusBadge.className = `px-4 py-2 rounded-full font-mono text-[11px] font-700 ${['closed','delivered'].includes(o.status)?'bg-lime text-ink':['needs_action','new','pending_proof'].includes(o.status)?'bg-red-500 text-white':'bg-violet text-white'}`;
+
+  // Progress
+  const steps = ['needs_action','approved','ready','closed'];
+  const statusOrder = {needs_action:0, new:0, pending_proof:0, approved:1, in_progress:1, active:1, ready:2, closed:3, delivered:3};
+  const currentStep = statusOrder[o.status]||0;
+  const progress = (currentStep/3)*100;
+  document.getElementById('progress-line').style.width = progress+'%';
+  for(let i=1;i<=4;i++){
+    const dot = document.getElementById(`step-${i}-dot`);
+    if(i-1<=currentStep){ dot.className='w-10 h-10 rounded-full bg-ink text-paper grid place-items-center mx-auto font-700'; dot.textContent='✓'; }
+    else { dot.className='w-10 h-10 rounded-full border border-black/15 grid place-items-center mx-auto'; dot.textContent=i; }
+  }
+
+  document.getElementById('track-details').innerHTML = `
+    <div><span class="font-mono text-[11px] opacity-60">WEBSITE TYPE:</span> ${o.websiteType||'—'}</div>
+    <div><span class="font-mono text-[11px] opacity-60">PACKAGE:</span> ${o.package?.toUpperCase()} • ${o.budget||''}</div>
+    <div><span class="font-mono text-[11px] opacity-60">ANIMATIONS:</span> ${(o.styles||[]).join(', ')||'—'}</div>
+    <div><span class="font-mono text-[11px] opacity-60">VISION:</span> ${o.vision||'—'}</div>
+    <div class="pt-3 border-t border-black/10"><span class="font-mono text-[11px] opacity-60">CUSTOMER:</span> ${o.name} • ${o.email}<br>${o.company||'Raebareli'}</div>
+  `;
+
+  const nextMsgs = {
+    needs_action:'Payment pending — Please pay ₹200 advance on UPI 8957288848@fam and send screenshot to vishishthgaurlittle@gmail.com or DM @_kaatya_og_ with Order ID',
+    pending_proof:'Payment screenshot received — We are verifying. You will get approval in 2 hours.',
+    approved:'Payment approved ✓ — Work started! Design prototype in 48 hours. Track here for updates.',
+    in_progress:'Work in progress — Your 3D scrolling website is being coded with GSAP + Three.js. Ready in 2-3 days.',
+    ready:'Ready for review ✓ — Check your email for live link. Approve to go live!',
+    closed:'Delivered ✓ — Your website is live! Invoice sent to email. Review us on Google for 10% off next order.',
+    delivered:'Delivered ✓ — Thank you for choosing Kaatya Web Developer Raebareli!'
+  };
+  document.getElementById('track-next').textContent = nextMsgs[o.status]||'Contact vishishthgaurlittle@gmail.com or DM @_kaatya_og_ for update';
+}
+
+// Auto track if id in URL
+window.addEventListener('load',()=>{
+  const id = new URLSearchParams(location.search).get('id') || new URLSearchParams(location.search).get('track');
+  if(id){ document.getElementById('track-input').value=id; trackOrder(); }
+});
+</script>
+</body>
+</html>

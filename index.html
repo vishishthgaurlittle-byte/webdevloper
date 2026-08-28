@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KAATYA WEB DEVELOPER — Best 3D Scrolling Websites | Raebareli</title>
+<meta name="description" content="KAATYA WEB DEVELOPER - Raebareli's #1 3D Scrolling Studio near Ganesh Hotel. Insta @_kaatya_og_ | Email vishishthgaurlittle@gmail.com | 3D Websites Portfolio">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{fontFamily:{syne:['Syne'],space:['Space Grotesk'],mono:['JetBrains Mono']},colors:{ink:'#0A0A0B',lime:'#D6FF57',violet:'#8A5CFF',paper:'#F5F3EF'}}}}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  body{overscroll-behavior:none; background:#0A0A0B; color:#F5F3EF; cursor: none;}
+  .glass{background:rgba(255,255,255,0.06); backdrop-filter:blur(24px); border:1px solid rgba(255,255,255,0.08);}
+  .text-stroke{-webkit-text-stroke:1.2px rgba(245,243,239,0.2); color:transparent;}
+  .noise::before{content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E"); pointer-events:none; z-index:9999;}
+  .marquee-track{animation:marquee 30s linear infinite} @keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+  ::-webkit-scrollbar{width:6px} ::-webkit-scrollbar-thumb{background:#D6FF57; border-radius:10px}
+  /* Custom cursor */
+  .cursor-dot{width:8px; height:8px; background:#D6FF57; position:fixed; top:0; left:0; border-radius:50%; pointer-events:none; z-index:99999; mix-blend-mode:difference;}
+  .cursor-ring{width:40px; height:40px; border:1px solid rgba(214,255,87,0.5); position:fixed; top:0; left:0; border-radius:50%; pointer-events:none; z-index:99999; transition: all 0.15s ease-out; mix-blend-mode:difference;}
+  .cursor-ring.hover{width:80px; height:80px; background:rgba(214,255,87,0.1); border-color:#D6FF57;}
+  /* Scroll progress */
+  #scroll-progress{position:fixed; top:0; left:0; width:0%; height:3px; background:linear-gradient(90deg,#D6FF57,#8A5CFF); z-index:100; transition: width 0.1s linear;}
+  /* Magnetic */
+  .magnetic{transition: transform 0.3s cubic-bezier(0.23,1,0.32,1);}
+  /* FAQ */
+  .faq-item{border-bottom:1px solid rgba(255,255,255,0.1);}
+  .faq-answer{max-height:0; overflow:hidden; transition: max-height 0.4s ease, padding 0.4s ease;}
+  .faq-item.active .faq-answer{max-height:500px; padding-bottom:24px;}
+  .faq-item.active .faq-icon{transform: rotate(45deg);}
+  /* Testimonial */
+  .testimonial-card{scroll-snap-align: center;}
+  @media (max-width: 768px){ body{cursor: auto;} .cursor-dot,.cursor-ring{display:none;} }
+</style>
+</head>
+<body class="font-space noise antialiased selection:bg-lime selection:text-ink">
+
+<!-- Scroll Progress -->
+<div id="scroll-progress"></div>
+<!-- Custom Cursor -->
+<div class="cursor-dot" id="cursor-dot"></div>
+<div class="cursor-ring" id="cursor-ring"></div>
+
+<!-- Floating UI -->
+<div class="fixed bottom-6 right-6 z-40 flex flex-col gap-3 hidden md:flex">
+  <a href="https://www.instagram.com/_kaatya_og_" target="_blank" class="w-12 h-12 rounded-full bg-gradient-to-r from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] grid place-items-center shadow-lg hover:scale-110 transition magnetic">📸</a>
+  <button id="back-to-top" class="w-12 h-12 rounded-full bg-white text-ink grid place-items-center shadow-lg hover:bg-lime transition opacity-0 pointer-events-none">↑</button>
+</div>
+
+<div id="loader" class="fixed inset-0 z-[100] bg-ink flex flex-col items-center justify-center">
+  <div class="font-syne text-[11vw] leading-[0.8] font-800 tracking-tighter text-center">
+    <div class="overflow-hidden"><div id="loader-text-1" class="translate-y-full">KAATYA</div></div>
+    <div class="overflow-hidden"><div id="loader-text-2" class="translate-y-full text-lime">WEB DEV</div></div>
+    <div class="font-mono text-[10px] tracking-[0.4em] mt-4 opacity-60">RAEBARELI • NEAR GANESH HOTEL • @_KAATYA_OG_</div>
+  </div>
+  <div class="mt-10 flex items-center gap-3 font-mono text-[11px] tracking-[0.3em] opacity-60">
+    <div class="w-20 h-[1px] bg-white/20 relative overflow-hidden"><div id="loader-bar" class="absolute inset-0 bg-lime w-0"></div></div>
+    <span id="loader-percent">0%</span>
+  </div>
+</div>
+
+<nav id="nav" class="fixed top-0 w-full z-40 px-6 md:px-10 py-5 flex justify-between items-center mix-blend-difference">
+  <div class="flex items-center gap-4">
+    <div class="w-10 h-10 bg-lime text-ink grid place-items-center font-syne font-800 text-[20px] rounded">K</div>
+    <div class="leading-none">
+      <div class="font-syne font-800 text-[16px] tracking-tight text-white">KAATYA WEB DEVELOPER</div>
+      <div class="font-mono text-[8px] tracking-[0.2em] text-white/60">RAEBARELI • vishishthgaurlittle@gmail.com</div>
+    </div>
+  </div>
+  <div class="hidden lg:flex items-center gap-7 font-mono text-[11px] tracking-widest">
+    <a href="#work" class="hover:text-lime transition">ANIMATIONS</a>
+    <a href="#featured" class="hover:text-lime transition">★ FEATURED [13]</a>
+    <a href="#templates" class="hover:text-lime transition">TEMPLATES</a>
+    <a href="#contact" class="hover:text-lime transition">CONTACT</a>
+    <a href="https://www.instagram.com/_kaatya_og_" target="_blank" class="px-3 py-1.5 bg-gradient-to-r from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] text-white rounded-full">INSTA @_kaatya_og_</a>
+    <a href="admin-login.html" class="px-4 py-2 border border-lime/30 bg-lime/10 text-lime hover:bg-lime hover:text-ink transition rounded-full">LOGIN</a>
+    <a href="admin.html" class="px-4 py-2 border border-white/20 hover:bg-white hover:text-black transition">ADMIN</a>
+  </div>
+  <a href="#order" class="px-5 py-3 bg-lime text-ink font-mono text-[11px] font-700 tracking-widest hover:bg-white transition">ORDER NOW →</a>
+</nav>
+
+<section class="relative min-h-[110vh] flex items-center overflow-hidden">
+  <canvas id="hero-canvas" class="absolute inset-0 w-full h-full"></canvas>
+  <div class="absolute inset-0 bg-gradient-to-b from-ink/10 via-transparent to-ink z-[1]"></div>
+  <div class="relative z-10 w-full px-6 md:px-10 pt-28">
+    <div class="flex flex-col lg:flex-row justify-between gap-10">
+      <div class="max-w-[1000px]">
+        <div class="inline-flex flex-wrap items-center gap-3 glass rounded-full px-4 py-2 font-mono text-[10px] tracking-widest mb-8">
+          <span class="w-2 h-2 bg-lime rounded-full animate-pulse"></span>
+          <span>📍 NEAR GANESH HOTEL, RAEBARELI</span><span class="opacity-30">•</span><span>✉️ vishishthgaurlittle@gmail.com</span><span class="opacity-30">•</span><a href="https://www.instagram.com/_kaatya_og_" target="_blank" class="underline hover:text-lime">INSTA @_kaatya_og_</a>
+        </div>
+        <h1 class="font-syne font-800 leading-[0.85] tracking-tighter text-[12vw] md:text-[9vw] lg:text-[7.8vw]">
+          <span class="block overflow-hidden"><span id="h1-1" class="block">BEST 3D</span></span>
+          <span class="block overflow-hidden"><span id="h1-2" class="block text-stroke">SCROLLING</span></span>
+          <span class="block overflow-hidden"><span id="h1-3" class="block">WEBSITES <span class="text-lime">FROM</span></span></span>
+          <span class="block overflow-hidden"><span id="h1-4" class="block font-light italic">Raebareli → World</span></span>
+        </h1>
+        <div class="mt-8 flex flex-wrap gap-3 font-mono text-[10px]">
+          <span class="px-3 py-1.5 glass rounded-full">GSAP SCROLLTRIGGER</span>
+          <span class="px-3 py-1.5 glass rounded-full">THREE.JS + WEBGL</span>
+          <span class="px-3 py-1.5 glass rounded-full">LENIS SMOOTH</span>
+          <span class="px-3 py-1.5 glass rounded-full">13 FEATURED SITES LIVE</span>
+        </div>
+      </div>
+      <div class="lg:w-[360px] flex flex-col justify-end pb-10 gap-6">
+        <p class="font-space text-[15px] leading-relaxed text-white/70">
+          I am <span class="text-white font-700">KAATYA WEB DEVELOPER</span> — Raebareli's top 3D scrolling specialist near Ganesh Hotel. We build <span class="text-white font-600">cinematic, high-converting websites</span> that feel like Apple.com.
+          <br><br>13 featured 3D websites live below — click to experience real scroll magic. DM on Insta <a href="https://www.instagram.com/_kaatya_og_" target="_blank" class="text-lime underline">@_kaatya_og_</a>
+        </p>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="glass p-4 rounded-2xl"><div class="font-syne text-3xl font-700">13</div><div class="font-mono text-[10px] opacity-60">FEATURED SITES</div></div>
+          <div class="glass p-4 rounded-2xl"><div class="font-syne text-3xl font-700">4.9/5</div><div class="font-mono text-[10px] opacity-60">CLIENT RATING</div></div>
+          <div class="glass p-4 rounded-2xl col-span-2 flex justify-between items-center"><div><div class="font-syne text-[14px] font-700">📍 Raebareli Studio</div><div class="font-mono text-[9px] opacity-60">Near Ganesh Hotel, UP 229001</div></div><div class="w-8 h-8 bg-lime rounded-full grid place-items-center text-ink">↗</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="border-y border-white/10 py-4 overflow-hidden bg-lime text-ink">
+  <div class="flex marquee-track w-max font-syne font-800 text-2xl">
+    <div class="flex items-center gap-10 pr-10"><span>KAATYA WEB DEVELOPER — RAEBARELI</span><span class="w-2 h-2 bg-ink rounded-full"></span><span>13 FEATURED 3D WEBSITES LIVE</span><span class="w-2 h-2 bg-ink rounded-full"></span><span>INSTA @_kaatya_og_</span><span class="w-2 h-2 bg-ink rounded-full"></span><span>EMAIL vishishthgaurlittle@gmail.com</span><span class="w-2 h-2 bg-ink rounded-full"></span></div>
+    <div class="flex items-center gap-10 pr-10" aria-hidden="true"><span>KAATYA WEB DEVELOPER — RAEBARELI</span><span class="w-2 h-2 bg-ink rounded-full"></span><span>13 FEATURED 3D WEBSITES LIVE</span><span class="w-2 h-2 bg-ink rounded-full"></span><span>INSTA @_kaatya_og_</span><span class="w-2 h-2 bg-ink rounded-full"></span><span>EMAIL vishishthgaurlittle@gmail.com</span><span class="w-2 h-2 bg-ink rounded-full"></span></div>
+  </div>
+</div>
+
+<section id="work" class="px-6 md:px-10 py-24 md:py-32">
+  <div class="flex flex-wrap justify-between items-end gap-6 mb-16">
+    <div>
+      <div class="font-mono text-lime text-[11px] tracking-[0.3em] mb-4">[ SIGNATURE SCROLL ANIMATIONS — 06 ]</div>
+      <h2 class="font-syne font-800 text-[10vw] md:text-[6vw] leading-[0.9] tracking-tighter">PICK YOUR<br><span class="text-stroke">POISON.</span></h2>
+    </div>
+    <div class="max-w-[380px] font-space text-white/60">Production-ready scroll systems. Click to experience fullscreen. Built in Raebareli.</div>
+  </div>
+  <div id="work-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+</section>
+
+<!-- ABOUT FOUNDER - KAATYA STORY -->
+<section id="about" class="px-6 md:px-10 py-24 bg-ink border-t border-white/5">
+  <div class="max-w-[1600px] mx-auto grid lg:grid-cols-[1.1fr_0.9fr] gap-12 items-center">
+    <div>
+      <div class="font-mono text-lime text-[11px] tracking-[0.3em]">[ ABOUT FOUNDER — RAEBARELI TO WORLD ]</div>
+      <h2 class="font-syne font-800 text-[8vw] md:text-[5vw] leading-[0.85] tracking-tighter mt-6">I'M <span class="text-lime">KAATYA</span><br>SCROLL<br><span class="text-stroke">OBSESSED</span></h2>
+      <div class="mt-8 space-y-5 font-space text-[15px] leading-relaxed text-white/70">
+        <p>Namaste! I'm the guy behind <span class="text-white font-700">KAATYA WEB DEVELOPER</span> — located near Ganesh Hotel, Raebareli, UP. While others in Raebareli build basic websites, I build <span class="text-white">3D scrolling experiences that feel like Apple, Linear, and Obys.agency</span>.</p>
+        <p>Started coding at 14 in a small cyber cafe near Civil Lines. No fancy degree — just 120+ sites shipped, 4.9/5 rating, and obsession for 60fps scroll. My setup: GSAP + Three.js + Lenis + WebGL + pure JavaScript. No WordPress templates.</p>
+        <p>Why Raebareli? Low cost, high quality. Same Awwwards-level quality as Delhi/Mumbai agencies at 50% price. You can visit my studio near Ganesh Hotel, see live demos, and get prototype in 48 hours.</p>
+      </div>
+      <div class="mt-10 grid grid-cols-3 gap-4">
+        <div class="glass p-5 rounded-2xl text-center"><div class="font-syne font-800 text-3xl">120+</div><div class="font-mono text-[10px] opacity-60 mt-1">SITES SHIPPED</div><div class="font-mono text-[9px] opacity-40">2019-2026</div></div>
+        <div class="glass p-5 rounded-2xl text-center"><div class="font-syne font-800 text-3xl">13</div><div class="font-mono text-[10px] opacity-60 mt-1">FEATURED LIVE</div><div class="font-mono text-[9px] opacity-40">3D SCROLL</div></div>
+        <div class="bg-lime text-ink p-5 rounded-2xl text-center"><div class="font-syne font-800 text-3xl">2.4s</div><div class="font-mono text-[10px] mt-1">AVG LOAD • 98 SCORE</div><div class="font-mono text-[9px] opacity-60">PERFORMANCE</div></div>
+      </div>
+      <div class="mt-8 flex gap-3">
+        <a href="https://www.instagram.com/_kaatya_og_" target="_blank" class="px-6 py-3 bg-white text-ink rounded-full font-mono text-[11px] font-700 hover:bg-lime transition magnetic">INSTA @_kaatya_og_ →</a>
+        <a href="mailto:vishishthgaurlittle@gmail.com" class="px-6 py-3 border border-white/20 rounded-full font-mono text-[11px] hover:bg-white hover:text-ink transition">EMAIL ME</a>
+      </div>
+    </div>
+    <div class="relative">
+      <div class="aspect-[4/5] rounded-[32px] overflow-hidden bg-gradient-to-br from-lime via-violet to-ink p-[1px]">
+        <div class="w-full h-full rounded-[32px] bg-ink p-8 flex flex-col justify-between">
+          <div class="flex justify-between"><div class="font-mono text-[11px] px-3 py-1 bg-lime text-ink rounded-full">📍 RAEBARELI STUDIO</div><div class="font-mono text-[10px] opacity-60">EST. 2019</div></div>
+          <div>
+            <div class="font-syne font-800 text-[48px] leading-[0.8]">KAATYA<br><span class="text-lime">WEB</span><br>DEV</div>
+            <div class="mt-6 space-y-3 font-mono text-[11px]">
+              <div class="flex justify-between"><span class="opacity-60">LOCATION</span><span>Near Ganesh Hotel</span></div>
+              <div class="flex justify-between"><span class="opacity-60">EMAIL</span><span class="text-[10px]">vishishthgaurlittle@gmail.com</span></div>
+              <div class="flex justify-between"><span class="opacity-60">INSTA</span><span>@_kaatya_og_</span></div>
+              <div class="flex justify-between"><span class="opacity-60">SPECIALITY</span><span class="text-lime">3D SCROLL</span></div>
+              <div class="flex justify-between"><span class="opacity-60">STACK</span><span>GSAP • Three.js</span></div>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="p-3 bg-white/5 rounded-xl text-center"><div class="font-syne font-700">100%</div><div class="font-mono text-[9px] opacity-60">CUSTOM CODE</div></div>
+            <div class="p-3 bg-lime text-ink rounded-xl text-center"><div class="font-syne font-700">48H</div><div class="font-mono text-[9px]">PROTOTYPE</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="absolute -bottom-6 -right-6 glass p-4 rounded-2xl hidden md:block"><div class="font-mono text-[10px] opacity-60">CURRENTLY BUILDING</div><div class="font-syne font-700 mt-1">3D Scroll for SaaS • Raebareli</div><div class="w-full h-1 bg-white/10 rounded-full mt-3 overflow-hidden"><div class="h-full w-[75%] bg-lime"></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- TECH STACK LAB -->
+<section id="tech" class="px-6 md:px-10 py-20 bg-[#0F0F10] border-y border-white/5">
+  <div class="max-w-[1600px] mx-auto">
+    <div class="flex flex-wrap justify-between gap-6 mb-10">
+      <div><div class="font-mono text-lime text-[11px] tracking-[0.3em]">TECH STACK LAB — All materials shown</div><h3 class="font-syne font-800 text-[36px] md:text-[48px] leading-[0.9] mt-3">STACK THAT<br><span class="text-stroke">POWERS SCROLL</span></h3></div>
+      <div class="lg:w-[360px] font-mono text-[11px] opacity-60 leading-relaxed">Every technology I use, no secrets. Click any stack to see code snippet and performance impact. All materials from PICK YOUR POISON section use these.</div>
+    </div>
+    <div class="grid md:grid-cols-3 lg:grid-cols-6 gap-[1px] bg-white/10 rounded-[24px] overflow-hidden border border-white/10">
+      <div class="bg-ink p-6 group hover:bg-[#1A1A1D] transition"><div class="w-10 h-10 bg-lime text-ink rounded-xl grid place-items-center font-700">G</div><div class="font-syne font-700 mt-4">GSAP 3.12.5</div><div class="font-mono text-[10px] opacity-60 mt-2">ScrollTrigger, SplitText, Pin, Scrub, 60fps</div><div class="mt-4 font-mono text-[9px] px-2 py-1 bg-white/10 rounded-full inline-block">Core: 120KB</div></div>
+      <div class="bg-ink p-6 group hover:bg-[#1A1A1D] transition"><div class="w-10 h-10 bg-violet text-white rounded-xl grid place-items-center">3D</div><div class="font-syne font-700 mt-4">Three.js r128</div><div class="font-mono text-[10px] opacity-60 mt-2">WebGL, Shaders, Torus, Particles 800</div><div class="mt-4 font-mono text-[9px] px-2 py-1 bg-white/10 rounded-full inline-block">GPU: 150KB</div></div>
+      <div class="bg-ink p-6 group hover:bg-[#1A1A1D] transition"><div class="w-10 h-10 bg-white text-ink rounded-xl grid place-items-center">L</div><div class="font-syne font-700 mt-4">Lenis 1.1.18</div><div class="font-mono text-[10px] opacity-60 mt-2">Smooth scroll, lerp 0.08, 0 jank</div><div class="mt-4 font-mono text-[9px] px-2 py-1 bg-lime text-ink rounded-full inline-block">Smooth: 15KB</div></div>
+      <div class="bg-ink p-6 group hover:bg-[#1A1A1D] transition"><div class="w-10 h-10 bg-[#FF5A1F] text-white rounded-xl grid place-items-center">C</div><div class="font-syne font-700 mt-4">CSS 3D</div><div class="font-mono text-[10px] opacity-60 mt-2">perspective, clip-path, backdrop-filter</div><div class="mt-4 font-mono text-[9px] px-2 py-1 bg-white/10 rounded-full inline-block">Zero JS</div></div>
+      <div class="bg-ink p-6 group hover:bg-[#1A1A1D] transition"><div class="w-10 h-10 bg-paper text-ink rounded-xl grid place-items-center">W</div><div class="font-syne font-700 mt-4">WebGL Shaders</div><div class="font-mono text-[10px] opacity-60 mt-2">GLSL vertex/fragment, uProgress uniform</div><div class="mt-4 font-mono text-[9px] px-2 py-1 bg-white/10 rounded-full inline-block">Ultra: GPU</div></div>
+      <div class="bg-lime text-ink p-6"><div class="w-10 h-10 bg-ink text-lime rounded-xl grid place-items-center">⚡</div><div class="font-syne font-800 mt-4">98 Lighthouse</div><div class="font-mono text-[10px] mt-2 opacity-70">90+ performance, 0 CLS, 2.4s load, 100% custom</div><div class="mt-4 font-mono text-[9px] px-2 py-1 bg-ink text-lime rounded-full inline-block font-700">OPTIMIZED</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CLIENT LOGOS MARQUEE -->
+<div class="py-8 border-y border-white/5 bg-ink overflow-hidden">
+  <div class="font-mono text-[10px] tracking-[0.3em] opacity-40 text-center mb-4">TRUSTED BY RAEBARELI + GLOBAL BRANDS — 13 FEATURED SITES USE SAME STACK</div>
+  <div class="flex marquee-track w-max gap-16 pr-16 font-syne font-700 text-xl opacity-30">
+    <span>OTSUKA AIR</span><span>•</span><span>VOID SBS</span><span>•</span><span>CLUB ATHLETIC</span><span>•</span><span>EVE BCN</span><span>•</span><span>DRINK SOM</span><span>•</span><span>FRAMER AI</span><span>•</span><span>LIGHTWEIGHT</span><span>•</span><span>COMINVI</span><span>•</span><span>AJ BURY</span><span>•</span><span>INFINITY SIGNAL</span><span>•</span><span>LAYR MEDIA</span><span>•</span><span>PEREGRINE</span><span>•</span><span>QUALITY GLASS</span>
+    <span>OTSUKA AIR</span><span>•</span><span>VOID SBS</span><span>•</span><span>CLUB ATHLETIC</span><span>•</span><span>EVE BCN</span><span>•</span><span>DRINK SOM</span><span>•</span><span>FRAMER AI</span><span>•</span><span>LIGHTWEIGHT</span><span>•</span><span>COMINVI</span><span>•</span><span>AJ BURY</span><span>•</span><span>INFINITY SIGNAL</span><span>•</span><span>LAYR MEDIA</span><span>•</span><span>PEREGRINE</span><span>•</span><span>QUALITY GLASS</span>
+  </div>
+</div>
+
+<!-- FEATURED WEBSITES - 13 REAL SITES FROM USER -->
+<section id="featured" class="px-6 md:px-10 py-24 bg-paper text-ink rounded-t-[32px]">
+  <div class="max-w-[1600px] mx-auto">
+    <div class="flex flex-wrap justify-between items-end gap-6 mb-12">
+      <div>
+        <div class="inline-flex items-center gap-2 bg-ink text-paper px-4 py-2 rounded-full font-mono text-[10px] tracking-widest"><span class="w-2 h-2 bg-lime rounded-full animate-pulse"></span> ★ FEATURED WEBSITES — 13 LIVE 3D SITES • CURATED BY KAATYA</div>
+        <h2 class="font-syne font-800 text-[9vw] md:text-[5.5vw] leading-[0.85] tracking-tighter mt-6">13 FEATURED<br><span class="italic font-light">3D WEBSITES</span><br>LIVE NOW</h2>
+      </div>
+      <div class="lg:w-[420px]">
+        <p class="font-space text-[15px] leading-relaxed opacity-70">These are real 3D scrolling websites I can build for you — inspired by Awwwards winners. Each is ★ Featured with live preview. Click LIVE to visit real site, PREVIEW for 3D breakdown. Want same for your brand? Order now.</p>
+        <div class="mt-6 flex gap-3"><div class="px-4 py-2 bg-ink text-paper rounded-full font-mono text-[11px] font-700">★ 13 Featured • Live</div><div class="px-4 py-2 border border-black/10 rounded-full font-mono text-[11px]">Click → Live Preview</div></div>
+      </div>
+    </div>
+
+    <div id="featured-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- 13 websites injected by JS -->
+    </div>
+
+    <div class="mt-12 p-6 bg-ink text-paper rounded-[24px] flex flex-wrap justify-between items-center gap-4">
+      <div><div class="font-syne font-700 text-xl">Want your website featured here as #14?</div><div class="font-mono text-[11px] opacity-60 mt-1">Order now — your site will be added as ★ Featured and replace a demo slot</div></div>
+      <a href="#order" class="px-8 py-3 bg-lime text-ink rounded-full font-mono text-[12px] font-700">ORDER YOUR FEATURED SITE →</a>
+    </div>
+  </div>
+</section>
+
+<section id="templates" class="px-6 md:px-10 py-24 bg-ink border-t border-white/10">
+  <div class="max-w-[1600px] mx-auto">
+    <div class="flex flex-wrap justify-between items-end gap-6 mb-12">
+      <div>
+        <div class="font-mono text-lime text-[11px] tracking-[0.3em]">3D TEMPLATES — READY TO CLONE</div>
+        <h2 class="font-syne font-800 text-[8vw] md:text-[5vw] leading-[0.9] mt-4">8 PREMIUM<br><span class="text-lime">TEMPLATES</span></h2>
+      </div>
+      <div class="lg:w-[380px] font-mono text-[11px] opacity-60">Each template is GSAP + Three.js powered, branded in 48h. Order same scroll system.</div>
+    </div>
+    <div id="templates-grid" class="grid md:grid-cols-2 lg:grid-cols-4 gap-[1px] bg-white/10 border border-white/10 rounded-[24px] overflow-hidden"></div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS - Dynamic from admin reviews -->
+<section id="testimonials" class="px-6 md:px-10 py-24 bg-paper text-ink border-t border-black/5">
+  <div class="max-w-[1600px] mx-auto">
+    <div class="flex flex-wrap justify-between gap-6 mb-12">
+      <div><div class="font-mono text-[11px] tracking-[0.3em] opacity-60">[ CLIENT LOVE — 4.9/5 RATING ]</div><h2 class="font-syne font-800 text-[8vw] md:text-[5vw] leading-[0.85] tracking-tighter mt-4">CLIENTS SAY<br><span class="italic font-light">Dil se</span></h2></div>
+      <div class="flex gap-3 items-end"><div class="px-4 py-2 bg-ink text-paper rounded-full font-mono text-[11px]">★ 4.9/5 • 120+ sites</div><a href="https://www.instagram.com/_kaatya_og_" target="_blank" class="px-4 py-2 border border-black/10 rounded-full font-mono text-[11px]">See Insta →</a></div>
+    </div>
+    <div id="testimonials-track" class="flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory" style="scrollbar-width:none;">
+      <div class="testimonial-card min-w-[340px] md:min-w-[420px] snap-center bg-ink text-paper rounded-[24px] p-8">
+        <div class="flex gap-1 text-lime">★★★★★</div>
+        <p class="font-space text-[18px] leading-relaxed mt-4">"Ganesh Hotel website is amazing! 3D scroll increased bookings 200%. Kaatya best in Raebareli! Near Ganesh Hotel, easy to meet."</p>
+        <div class="mt-6 flex justify-between items-center"><div><div class="font-syne font-700">Rohit Gupta</div><div class="font-mono text-[11px] opacity-60">Ganesh Hotel, Raebareli</div></div><div class="w-10 h-10 bg-lime text-ink rounded-full grid place-items-center">R</div></div>
+      </div>
+      <div class="testimonial-card min-w-[340px] md:min-w-[420px] snap-center bg-white border border-black/10 rounded-[24px] p-8">
+        <div class="flex gap-1">★★★★★</div>
+        <p class="font-space text-[18px] leading-relaxed mt-4">"Coaching site with sticky stack is fire. Students love it. @_kaatya_og_ is talented! Results animation = admission +40%."</p>
+        <div class="mt-6 flex justify-between items-center"><div><div class="font-syne font-700">Priya Sharma</div><div class="font-mono text-[11px] opacity-60">Raebareli Coaching Center</div></div><div class="w-10 h-10 bg-ink text-paper rounded-full grid place-items-center">P</div></div>
+      </div>
+      <div class="testimonial-card min-w-[340px] md:min-w-[420px] snap-center bg-lime text-ink rounded-[24px] p-8">
+        <div class="flex gap-1">★★★★★</div>
+        <p class="font-space text-[18px] leading-relaxed mt-4">"We wanted Apple.com feel for our SaaS. Kaatya delivered WebGL morph in 5 days. 98 Lighthouse, 0 jank. Worth ₹59,999!"</p>
+        <div class="mt-6 flex justify-between items-center"><div><div class="font-syne font-700">Amit Verma</div><div class="font-mono text-[11px] opacity-70">Lucknow SaaS Founder</div></div><div class="w-10 h-10 bg-ink text-lime rounded-full grid place-items-center">A</div></div>
+      </div>
+      <div class="testimonial-card min-w-[340px] md:min-w-[420px] snap-center bg-ink text-paper rounded-[24px] p-8 border border-lime/20">
+        <div class="flex gap-1 text-lime">★★★★★</div>
+        <p class="font-space text-[18px] leading-relaxed mt-4">"13 featured sites live — all 3D scroll magic. Otsuka Air style for our factory site? Done in 3 days. Raebareli to world quality!"</p>
+        <div class="mt-6 flex justify-between items-center"><div><div class="font-syne font-700">Factory Client</div><div class="font-mono text-[11px] opacity-60">Industrial • Kanpur</div></div><div class="w-10 h-10 bg-white text-ink rounded-full grid place-items-center">F</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="px-6 md:px-10 py-24 bg-ink border-t border-white/10">
+  <div class="max-w-[1000px] mx-auto">
+    <div class="font-mono text-lime text-[11px] tracking-[0.3em] text-center">[ FAQ — SAB SAWALON KE JAWAB ]</div>
+    <h2 class="font-syne font-800 text-[10vw] md:text-[5vw] leading-[0.85] tracking-tighter text-center mt-6">FAQ<br><span class="text-stroke"> Puchho jo bhi</span></h2>
+    
+    <div class="mt-16 space-y-0">
+      <div class="faq-item active">
+        <button class="w-full flex justify-between items-center py-6 text-left" onclick="this.parentElement.classList.toggle('active')">
+          <span class="font-syne font-700 text-[18px] md:text-[22px]">Raebareli me rehke world-class 3D kaise?</span><span class="faq-icon w-10 h-10 rounded-full border border-white/20 grid place-items-center transition">+</span>
+        </button>
+        <div class="faq-answer font-space text-white/60 leading-relaxed"><p>100% remote setup — GSAP + Three.js + Lenis. No office needed. Same stack as Obys.agency, Locomotive, Bruno Simon. Meet near Ganesh Hotel for brief, I code, you get live link in 48h. 120+ sites shipped from Raebareli to USA, Japan, EU.</p><div class="mt-4 flex gap-2"><span class="px-2 py-1 bg-white/10 rounded-full font-mono text-[10px]">GSAP</span><span class="px-2 py-1 bg-white/10 rounded-full font-mono text-[10px]">Three.js</span><span class="px-2 py-1 bg-lime text-ink rounded-full font-mono text-[10px]">Raebareli → World</span></div></div>
+      </div>
+      <div class="faq-item">
+        <button class="w-full flex justify-between items-center py-6 text-left" onclick="this.parentElement.classList.toggle('active')">
+          <span class="font-syne font-700 text-[18px] md:text-[22px]">UPI QR only at payment — safe hai?</span><span class="faq-icon w-10 h-10 rounded-full border border-white/20 grid place-items-center transition">+</span>
+        </button>
+        <div class="faq-answer font-space text-white/60 leading-relaxed"><p>Haan! UPI ID 8957288848@fam only shows during payment step (Step 3) — not on homepage. Pay ₹200 advance to confirm order, send screenshot to vishishthgaurlittle@gmail.com or DM @_kaatya_og_. Rest 50% after prototype approval. Secure Fam Pay.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="w-full flex justify-between items-center py-6 text-left" onclick="this.parentElement.classList.toggle('active')">
+          <span class="font-syne font-700 text-[18px] md:text-[22px]">13 featured websites — ye aapne banaye?</span><span class="faq-icon w-10 h-10 rounded-full border border-white/20 grid place-items-center transition">+</span>
+        </button>
+        <div class="faq-answer font-space text-white/60 leading-relaxed"><p>Ye 13 sites (otsuka-air.jp, void.sbs, clubathletic.co etc.) real 3D scroll inspirations hain — exact same scroll system I can build for you. Preview images visible over my site + live iframe modal. Your site will be #14 featured after order. No fake claims — transparent showcase.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="w-full flex justify-between items-center py-6 text-left" onclick="this.parentElement.classList.toggle('active')">
+          <span class="font-syne font-700 text-[18px] md:text-[22px]">Transition & Materials — sab dikhega?</span><span class="faq-icon w-10 h-10 rounded-full border border-white/20 grid place-items-center transition">+</span>
+        </button>
+        <div class="faq-answer font-space text-white/60 leading-relaxed"><p>Haan! PICK YOUR POISON section me har animation ke liye: ⚡ Transition (kaise move hoga) + 🧱 All Materials (GSAP, Three.js, Lenis, CSS 3D, Shaders) + Code snippet + Performance + Use case — sab dikh raha hai. Click TRY LIVE for fullscreen demo with full specs.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="w-full flex justify-between items-center py-6 text-left" onclick="this.parentElement.classList.toggle('active')">
+          <span class="font-syne font-700 text-[18px] md:text-[22px]">Kitne din me website live?</span><span class="faq-icon w-10 h-10 rounded-full border border-white/20 grid place-items-center transition">+</span>
+        </button>
+        <div class="faq-answer font-space text-white/60 leading-relaxed"><p>Starter: 3 days, Pro (most popular): 5 days, Ultra WebGL: 7 days. 48h me live prototype link milega — real scroll, not Figma. Test on phone, then approve. Raebareli studio near Ganesh Hotel pe aake bhi dekh sakte ho.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="contact" class="px-6 md:px-10 py-24 bg-paper text-ink">
+  <div class="max-w-[1600px] mx-auto grid lg:grid-cols-[1fr_1.2fr] gap-12">
+    <div>
+      <div class="font-mono text-[11px] tracking-[0.3em] opacity-60">[ VISIT STUDIO / CONTACT ]</div>
+      <h2 class="font-syne font-800 text-[9vw] md:text-[5vw] leading-[0.85] tracking-tighter mt-4">COME SAY<br>HI AT<br><span class="italic font-light">GANESH HOTEL</span></h2>
+      <div class="mt-10 space-y-6">
+        <div class="flex gap-4"><div class="w-12 h-12 rounded-full bg-ink text-paper grid place-items-center">📍</div><div><div class="font-syne font-700 text-xl">KAATYA WEB DEVELOPER</div><div class="font-space text-[14px] leading-relaxed mt-1">Near Ganesh Hotel, Civil Lines,<br>Raebareli, Uttar Pradesh 229001</div></div></div>
+        <div class="flex gap-4"><div class="w-12 h-12 rounded-full bg-ink text-paper grid place-items-center">✉️</div><div><div class="font-syne font-700">vishishthgaurlittle@gmail.com</div><div class="font-mono text-[11px] opacity-60">Reply in 2 hours • Hindi / English</div></div></div>
+        <div class="flex gap-4"><div class="w-12 h-12 rounded-full bg-gradient-to-r from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] text-white grid place-items-center">📸</div><div><div class="font-syne font-700"><a href="https://www.instagram.com/_kaatya_og_" target="_blank" class="hover:underline">@_kaatya_og_ on Instagram</a></div><div class="font-mono text-[11px] opacity-60">DM for quick quotes • Daily work updates</div></div></div>
+      </div>
+      <div class="mt-10 p-5 bg-ink text-paper rounded-[24px] flex gap-4 items-start">
+        <div class="w-12 h-12 bg-lime text-ink rounded-full grid place-items-center font-700">★</div>
+        <div><div class="font-syne font-700">13 Featured Websites Live</div><div class="font-mono text-[11px] opacity-60 mt-1">Click any featured site above to experience real 3D scroll. Want same for your brand? Order below.</div></div>
+      </div>
+    </div>
+    <div class="space-y-6">
+      <div class="rounded-[32px] overflow-hidden border border-black/10 h-[400px] relative bg-[#E8E6E1]">
+        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3578.0!2d81.233!3d26.215!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3990d1f123456789%3A0xabcdef123456!2sGanesh%20Hotel%2C%20Raebareli!5e0!3m2!1sen!2sin!4v1234567890" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+        <div class="absolute bottom-4 left-4 right-4 bg-white rounded-2xl p-4 flex justify-between items-center shadow-xl">
+          <div><div class="font-syne font-700">Near Ganesh Hotel, Raebareli</div><div class="font-mono text-[11px] opacity-60">Open in Google Maps • Raebareli, UP</div></div>
+          <a href="https://maps.google.com/?q=Ganesh+Hotel+Raebareli" target="_blank" class="w-10 h-10 bg-ink text-paper rounded-full grid place-items-center">↗</a>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="bg-ink text-paper rounded-[24px] p-6"><div class="font-mono text-[11px] opacity-60">WHY RAEBARELI?</div><div class="font-space text-[14px] mt-3 leading-relaxed">Low cost, high quality. Same 3D quality as Delhi agencies at 50% price. Meet near Ganesh Hotel.</div></div>
+        <div class="bg-lime text-ink rounded-[24px] p-6"><div class="font-mono text-[11px] opacity-60">DM ON INSTA</div><div class="font-syne font-700 text-xl mt-2 leading-tight"><a href="https://www.instagram.com/_kaatya_og_" target="_blank" class="hover:underline">@_kaatya_og_</a><br>Fast reply</div><div class="mt-3 font-mono text-[11px] underline">OPEN INSTA →</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="pricing" class="px-6 md:px-10 py-24 bg-ink border-t border-white/10">
+  <div class="flex flex-wrap justify-between gap-10 mb-16">
+    <h2 class="font-syne font-800 text-[10vw] md:text-[6vw] leading-[0.85] tracking-tighter">PACKAGES<br><span class="text-lime">RAEBARELI RATE</span></h2>
+    <div class="lg:w-[340px] pt-4">
+      <p class="text-white/60">Custom-coded. No templates. 14-day bug support. Payment via UPI only during checkout.</p>
+      <div class="mt-6 flex items-center gap-2 font-mono text-[11px]"><span class="w-2 h-2 bg-lime rounded-full"></span> 50% upfront, 50% on launch • Secure UPI</div>
+    </div>
+  </div>
+  <div class="grid lg:grid-cols-3 gap-[1px] bg-white/10 border border-white/10 rounded-[24px] overflow-hidden">
+    <div class="bg-ink p-8 md:p-10"><div class="font-mono text-[11px] tracking-widest opacity-60">STARTER — LOCAL BUSINESS</div><div class="font-syne font-800 text-5xl mt-4">₹29,999<span class="text-xl opacity-50">/page</span></div><div class="font-mono text-[11px] opacity-60 mt-1">Perfect for Raebareli shops</div><ul class="mt-8 space-y-3 font-space text-[14px] text-white/70"><li>✓ 1 Signature scroll effect</li><li>✓ Parallax + Pin + Reveal</li><li>✓ Mobile optimized</li><li>✓ 3-day delivery</li></ul><button data-package="starter" class="order-btn mt-10 w-full py-4 border border-white/20 font-mono text-[12px] tracking-widest hover:bg-white hover:text-ink transition">CHOOSE STARTER</button></div>
+    <div class="bg-[#121214] p-8 md:p-10 relative"><div class="absolute top-6 right-6 px-3 py-1 bg-lime text-ink font-mono text-[10px] font-700 rounded-full">MOST POPULAR</div><div class="font-mono text-[11px] tracking-widest text-lime">PRO — 3D • BEST VALUE</div><div class="font-syne font-800 text-5xl mt-4">₹59,999<span class="text-xl opacity-50">/page</span></div><div class="font-mono text-[11px] text-lime mt-1">Most ordered in UP</div><ul class="mt-8 space-y-3 font-space text-[14px] text-white/70"><li>✓ 3 Advanced scroll systems</li><li>✓ Three.js + Shaders</li><li>✓ Horizontal + Stack + Morph</li><li>✓ Lenis smooth + 90+ score</li></ul><button data-package="pro" class="order-btn mt-10 w-full py-4 bg-lime text-ink font-mono text-[12px] font-700 tracking-widest hover:bg-white transition">CHOOSE PRO →</button></div>
+    <div class="bg-ink p-8 md:p-10"><div class="font-mono text-[11px] tracking-widest opacity-60">ULTRA CINEMATIC</div><div class="font-syne font-800 text-5xl mt-4">₹1,19,999<span class="text-xl opacity-50">/page</span></div><div class="font-mono text-[11px] opacity-60 mt-1">For startups & brands</div><ul class="mt-8 space-y-3 font-space text-[14px] text-white/70"><li>✓ Full WebGL experience</li><li>✓ Custom shaders + physics</li><li>✓ Scroll-driven 3D world</li><li>✓ Sound + haptics</li></ul><button data-package="ultra" class="order-btn mt-10 w-full py-4 border border-white/20 font-mono text-[12px] tracking-widest hover:bg-white hover:text-ink transition">CHOOSE ULTRA</button></div>
+  </div>
+</section>
+
+<!-- ORDER FORM - ONLY PLACE WHERE UPI QR SHOWS -->
+<section id="order" class="px-6 md:px-10 py-24 md:py-32 bg-paper text-ink rounded-t-[32px] md:rounded-t-[48px] relative z-10">
+  <div class="max-w-[1400px] mx-auto grid lg:grid-cols-[1.1fr_0.9fr] gap-12 md:gap-20">
+    <div>
+      <div class="font-mono text-[11px] tracking-[0.3em] opacity-60">[ ORDER YOUR 3D SCROLL SYSTEM — KAATYA STUDIO ]</div>
+      <h2 class="font-syne font-800 text-[10vw] md:text-[5.5vw] leading-[0.85] tracking-tighter mt-4">LET'S BUILD<br>YOUR<br><span class="italic font-light">DREAM SCROLL</span></h2>
+      <div class="mt-8 p-5 bg-ink text-paper rounded-2xl flex gap-4 items-start"><div class="w-10 h-10 bg-lime text-ink rounded-full grid place-items-center shrink-0">📍</div><div><div class="font-syne font-700">KAATYA WEB DEVELOPER — Raebareli</div><div class="font-mono text-[11px] opacity-60 mt-1">Near Ganesh Hotel, UP 229001 • vishishthgaurlittle@gmail.com • Insta @_kaatya_og_</div></div></div>
+      <div class="mt-6 p-5 bg-white border border-black/10 rounded-2xl">
+        <div class="font-syne font-700">★ 13 Featured Websites Live Above</div>
+        <div class="font-mono text-[11px] opacity-60 mt-2">Click any to experience real 3D scroll. Want same? Select animation style and order below. UPI QR will appear only at payment step.</div>
+      </div>
+    </div>
+    <div class="bg-white border border-black/10 rounded-[32px] p-6 md:p-10 shadow-[0_20px_80px_rgba(0,0,0,0.08)]">
+      <div class="flex items-center gap-3 mb-8">
+        <div class="flex items-center gap-2"><div id="step-1-dot" class="w-8 h-8 rounded-full bg-ink text-paper grid place-items-center font-mono text-[12px]">1</div><span class="font-mono text-[11px]">STYLE</span></div>
+        <div class="w-8 h-[1px] bg-black/20"></div>
+        <div class="flex items-center gap-2"><div id="step-2-dot" class="w-8 h-8 rounded-full border border-black/20 grid place-items-center font-mono text-[12px]">2</div><span class="font-mono text-[11px] opacity-50">PROJECT</span></div>
+        <div class="w-8 h-[1px] bg-black/20"></div>
+        <div class="flex items-center gap-2"><div id="step-3-dot" class="w-8 h-8 rounded-full border border-black/20 grid place-items-center font-mono text-[12px]">3</div><span class="font-mono text-[11px] opacity-50">PAYMENT</span></div>
+      </div>
+      <form id="orderForm" class="space-y-6">
+        <div id="form-step-1" class="space-y-6">
+          <h3 class="font-syne font-700 text-2xl">Choose animation styles</h3>
+          <div class="grid grid-cols-1 gap-3">
+            <label class="group flex items-center gap-4 p-4 border border-black/10 rounded-xl cursor-pointer has-[:checked]:bg-ink has-[:checked]:text-paper has-[:checked]:border-ink transition"><input type="checkbox" name="styles" value="3D Depth Parallax" class="hidden"><div class="w-10 h-10 rounded-lg bg-black/5 group-has-[:checked]:bg-lime grid place-items-center">◈</div><div class="flex-1"><div class="font-600">3D Depth Parallax</div><div class="font-mono text-[11px] opacity-60">Layers at different speeds</div></div><div class="font-mono text-[11px]">+₹0</div></label>
+            <label class="group flex items-center gap-4 p-4 border border-black/10 rounded-xl cursor-pointer has-[:checked]:bg-ink has-[:checked]:text-paper has-[:checked]:border-ink transition"><input type="checkbox" name="styles" value="Horizontal Scroll Journey" class="hidden"><div class="w-10 h-10 rounded-lg bg-black/5 group-has-[:checked]:bg-lime grid place-items-center">↔</div><div class="flex-1"><div class="font-600">Horizontal Scroll Journey</div><div class="font-mono text-[11px] opacity-60">Sideways storytelling</div></div><div class="font-mono text-[11px]">+₹5k</div></label>
+            <label class="group flex items-center gap-4 p-4 border border-black/10 rounded-xl cursor-pointer has-[:checked]:bg-ink has-[:checked]:text-paper has-[:checked]:border-ink transition"><input type="checkbox" name="styles" value="Sticky Stack & Reveal" class="hidden"><div class="w-10 h-10 rounded-lg bg-black/5 group-has-[:checked]:bg-lime grid place-items-center">▤</div><div class="flex-1"><div class="font-600">Sticky Stack & Reveal</div><div class="font-mono text-[11px] opacity-60">Cards that stick</div></div><div class="font-mono text-[11px]">+₹3k</div></label>
+            <label class="group flex items-center gap-4 p-4 border border-black/10 rounded-xl cursor-pointer has-[:checked]:bg-ink has-[:checked]:text-paper has-[:checked]:border-ink transition"><input type="checkbox" name="styles" value="WebGL Morph & Distort" class="hidden"><div class="w-10 h-10 rounded-lg bg-black/5 group-has-[:checked]:bg-lime grid place-items-center">◎</div><div class="flex-1"><div class="font-600">WebGL Morph & Distort</div><div class="font-mono text-[11px] opacity-60">Three.js shaders</div></div><div class="font-mono text-[11px]">+₹10k</div></label>
+          </div>
+          <div class="flex justify-between items-center pt-4"><div class="font-mono text-[11px] opacity-60">SELECT AT LEAST ONE</div><button type="button" onclick="nextStep(2)" class="px-8 py-3 bg-ink text-paper font-mono text-[12px] tracking-widest rounded-full">NEXT →</button></div>
+        </div>
+        <div id="form-step-2" class="space-y-5 hidden">
+          <h3 class="font-syne font-700 text-2xl">Project details</h3>
+          <div><label class="font-mono text-[11px] tracking-widest">WEBSITE TYPE</label><select name="websiteType" class="mt-2 w-full p-4 border border-black/15 rounded-xl bg-white"><option>Landing Page</option><option>Portfolio</option><option>SaaS Website</option><option>E-commerce</option><option>Hotel / Restaurant (Raebareli)</option><option>Coaching / Education</option><option>Full Website (5+ pages)</option></select></div>
+          <div><label class="font-mono text-[11px] tracking-widest">PACKAGE</label><div class="mt-2 grid grid-cols-3 gap-2"><label class="cursor-pointer"><input type="radio" name="package" value="starter" class="peer hidden"><div class="p-3 border border-black/15 rounded-xl text-center peer-checked:bg-ink peer-checked:text-paper font-mono text-[11px]">STARTER<br>₹29,999</div></label><label class="cursor-pointer"><input type="radio" name="package" value="pro" checked class="peer hidden"><div class="p-3 border border-black/15 rounded-xl text-center peer-checked:bg-ink peer-checked:text-paper font-mono text-[11px]">PRO<br>₹59,999</div></label><label class="cursor-pointer"><input type="radio" name="package" value="ultra" class="peer hidden"><div class="p-3 border border-black/15 rounded-xl text-center peer-checked:bg-ink peer-checked:text-paper font-mono text-[11px]">ULTRA<br>₹1,19,999</div></label></div></div>
+          <div><label class="font-mono text-[11px] tracking-widest">REFERENCE LINKS (paste your 13 featured sites or other)</label><input name="references" placeholder="https://otsuka-air.jp/, https://void.sbs/ ..." class="mt-2 w-full p-4 border border-black/15 rounded-xl" /></div>
+          <div><label class="font-mono text-[11px] tracking-widest">DESCRIBE YOUR VISION</label><textarea name="vision" rows="4" placeholder="I want a website like https://otsuka-air.jp/ with 3D scroll..." class="mt-2 w-full p-4 border border-black/15 rounded-xl"></textarea></div>
+          <div class="flex justify-between pt-4"><button type="button" onclick="nextStep(1)" class="font-mono text-[12px] opacity-60">← BACK</button><button type="button" onclick="nextStep(3)" class="px-8 py-3 bg-ink text-paper font-mono text-[12px] tracking-widest rounded-full">NEXT → PAYMENT</button></div>
+        </div>
+        <div id="form-step-3" class="space-y-5 hidden">
+          <h3 class="font-syne font-700 text-2xl">Payment — UPI QR (Only here)</h3>
+          <div class="p-4 bg-lime/20 border-2 border-lime rounded-xl">
+            <div class="font-mono text-[11px] font-700 tracking-widest">💳 UPI PAYMENT — ONLY DURING PAYMENT STEP</div>
+            <div class="mt-4 flex gap-4 items-center">
+              <img src="upi-qr.png" class="w-24 h-24 rounded-xl bg-white p-2 border-2 border-ink">
+              <div><div class="font-syne font-700 text-[18px]">UPI: 8957288848@fam</div><div class="font-mono text-[11px] opacity-70 mt-1">Payee: KAATYA WEB DEVELOPER<br>Scan QR to pay ₹200 advance to confirm order</div><div class="mt-2 font-mono text-[10px] px-3 py-1 bg-ink text-paper rounded-full inline-block">SECURE • FAM PAY • Only shown at payment</div></div>
+            </div>
+            <div class="mt-4 p-3 bg-white rounded-xl font-mono text-[10px] leading-relaxed">UPI URL: upi://pay?pa=8957288848@fam&pn=KAATYA WEB DEVELOPER&cu=INR<br>After payment, send screenshot to vishishthgaurlittle@gmail.com or DM @_kaatya_og_ with Order ID</div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4"><div><label class="font-mono text-[11px] tracking-widest">BUDGET (INR)</label><select name="budget" class="mt-2 w-full p-4 border border-black/15 rounded-xl"><option>₹20k - ₹40k</option><option selected>₹40k - ₹80k</option><option>₹80k - ₹1.5L</option><option>₹1.5L+</option></select></div><div><label class="font-mono text-[11px] tracking-widest">TIMELINE</label><select name="timeline" class="mt-2 w-full p-4 border border-black/15 rounded-xl"><option>ASAP</option><option selected>1-2 Weeks</option><option>1 Month</option><option>Flexible</option></select></div></div>
+          <div><label class="font-mono text-[11px] tracking-widest">YOUR NAME *</label><input name="name" required placeholder="Rahul Singh" class="mt-2 w-full p-4 border border-black/15 rounded-xl" /></div>
+          <div><label class="font-mono text-[11px] tracking-widest">EMAIL *</label><input name="email" type="email" required placeholder="vishishthgaurlittle@gmail.com" class="mt-2 w-full p-4 border border-black/15 rounded-xl" /></div>
+          <div><label class="font-mono text-[11px] tracking-widest">LOCATION / BUSINESS</label><input name="company" placeholder="Raebareli, Lucknow, etc." class="mt-2 w-full p-4 border border-black/15 rounded-xl" /></div>
+          <div><label class="font-mono text-[11px] tracking-widest">OFFER CODE (optional)</label><input name="offerCode" placeholder="DIWALI10" class="mt-2 w-full p-4 border border-black/15 rounded-xl" /></div>
+          <div class="bg-lime/20 p-4 rounded-xl flex justify-between items-center"><div class="font-mono text-[11px]">ESTIMATED TOTAL</div><div id="estimatedTotal" class="font-syne font-800 text-2xl">₹59,999</div></div>
+          <div class="flex justify-between items-center pt-2"><button type="button" onclick="nextStep(2)" class="font-mono text-[12px] opacity-60">← BACK</button><button type="submit" class="px-8 py-4 bg-ink text-paper font-mono text-[12px] tracking-widest rounded-full hover:bg-black transition">PLACE ORDER + PAY ₹200 →</button></div>
+          <div class="font-mono text-[10px] opacity-50 text-center">UPI QR only shown here during payment — not on other pages</div>
+        </div>
+      </form>
+      <div id="order-success" class="hidden text-center py-16">
+        <div class="w-20 h-20 bg-lime rounded-full grid place-items-center mx-auto text-3xl">✓</div>
+        <h3 class="font-syne font-800 text-3xl mt-6">ORDER RECEIVED!</h3>
+        <p class="font-space text-[15px] opacity-70 mt-3 max-w-[340px] mx-auto">Track link: <span id="track-link-display" class="font-mono text-[11px] bg-black/5 p-1 rounded break-all"></span><br>Send UPI screenshot (8957288848@fam) to email or DM</p>
+        <div class="mt-6 font-mono text-[11px] p-3 bg-black/5 rounded-xl inline-block">ORDER ID: <span id="order-id-display" class="font-700"></span></div>
+        <div class="mt-6 p-4 bg-ink text-paper rounded-2xl flex gap-4 items-center text-left max-w-[380px] mx-auto">
+          <img src="upi-qr-white.png" class="w-20 h-20 rounded-xl bg-white p-2">
+          <div><div class="font-mono text-[11px] font-700">UPI: 8957288848@fam — Pay ₹200 now</div><div class="font-mono text-[10px] opacity-60 mt-1">Send screenshot to vishishthgaurlittle@gmail.com<br>Track: <span id="track-link-display-2" class="break-all"></span></div></div>
+        </div>
+        <div class="mt-6 flex gap-3 justify-center"><a href="https://www.instagram.com/_kaatya_og_" target="_blank" class="px-6 py-3 bg-gradient-to-r from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] text-white rounded-full font-mono text-[11px]">DM ON INSTA</a><button onclick="location.reload()" class="px-6 py-3 border border-black/15 rounded-full font-mono text-[11px]">NEW ORDER</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="bg-ink text-paper px-6 md:px-10 py-12 border-t border-white/10">
+  <div class="grid md:grid-cols-[1.5fr_1fr_1fr] gap-10">
+    <div>
+      <div class="flex items-center gap-3"><div class="w-10 h-10 bg-lime text-ink grid place-items-center font-syne font-800 rounded">K</div><div><div class="font-syne font-800 text-xl">KAATYA WEB DEVELOPER</div><div class="font-mono text-[10px] opacity-60">NEAR GANESH HOTEL, RAEBARELI, UP 229001</div></div></div>
+      <div class="font-space text-[14px] opacity-70 mt-4 max-w-[400px]">Raebareli's #1 3D scrolling studio. GSAP, Three.js, WebGL. Insta @_kaatya_og_ • 13 featured 3D sites live.</div>
+      <div class="mt-6 font-mono text-[11px] space-y-1"><div>📍 Near Ganesh Hotel, Civil Lines, Raebareli, UP 229001</div><div>✉️ vishishthgaurlittle@gmail.com</div><div>📸 Instagram: @_kaatya_og_</div></div>
+    </div>
+    <div class="font-mono text-[11px] tracking-widest"><div class="opacity-50 mb-4">QUICK LINKS</div><div class="space-y-3"><a href="#work" class="block hover:text-lime">ANIMATIONS</a><a href="#featured" class="block hover:text-lime">FEATURED [13]</a><a href="#templates" class="block hover:text-lime">TEMPLATES</a><a href="admin.html" class="block hover:text-lime">ADMIN LOGIN</a></div></div>
+    <div class="font-mono text-[11px] tracking-widest"><div class="opacity-50 mb-4">CONNECT</div><div class="space-y-3"><a href="https://www.instagram.com/_kaatya_og_" target="_blank" class="block hover:text-lime">INSTAGRAM @_kaatya_og_</a><a href="mailto:vishishthgaurlittle@gmail.com" class="block hover:text-lime">EMAIL US</a><div class="pt-4 opacity-60">MADE IN RAEBARELI WITH ❤️<br>©2026 KAATYA WEB DEVELOPER</div></div></div>
+  </div>
+</footer>
+
+<div id="demo-modal" class="fixed inset-0 z-[60] bg-ink/90 backdrop-blur-xl hidden">
+  <div class="absolute top-6 right-6 flex gap-3"><button onclick="closeDemo()" class="w-12 h-12 rounded-full bg-white text-ink grid place-items-center font-mono">✕</button></div>
+  <div class="h-full w-full flex flex-col"><div class="p-6 md:p-10 border-b border-white/10 flex justify-between items-end"><div><div id="demo-tag" class="font-mono text-lime text-[11px] tracking-widest"></div><h3 id="demo-title" class="font-syne font-800 text-4xl md:text-5xl mt-2"></h3></div><button onclick="document.getElementById('order').scrollIntoView({behavior:'smooth'}); closeDemo();" class="hidden md:block px-6 py-3 bg-lime text-ink font-mono text-[11px] font-700">ORDER THIS EFFECT →</button></div><div id="demo-stage" class="flex-1 overflow-auto p-6 md:p-10"></div></div>
+</div>
+
+<script src="js/insforge.js"></script>
+<script>
+// 13 REAL 3D WEBSITES - Now backed by Insforge: https://pnhxxd37.us-east.insforge.app Project: desginers
+// Fallback local data, but will be replaced by backend fetch
+let realWebsites = [
+  {id:'otsuka', title:'Otsuka Air — HVAC 3D Scroll', url:'https://otsuka-air.jp/', category:'Industrial • Japan • 3D Airflow', price:'₹59,999', desc:'Japanese HVAC site with airflow 3D scroll, product parallax, WebGL pipes.', color:'bg-[#0A84FF]', image:'HVAC', preview:'previews/otsuka-air.jpg'},
+  {id:'void', title:'Void SBS — Minimal 3D Void', url:'https://void.sbs/', category:'Minimal • WebGL • Experimental', price:'₹44,999', color:'bg-black', desc:'Ultra minimal black void with scroll-driven 3D objects, brutalist typography.', image:'VOID', preview:'previews/void-sbs.jpg'},
+  {id:'clubathletic', title:'Club Athletic — Sportswear 3D', url:'https://clubathletic.co/', category:'E-commerce • Sport • GSAP', price:'₹54,999', color:'bg-lime', desc:'Athletic wear with sticky product stack, horizontal scroll lookbook.', image:'CLUB', preview:'previews/club-athletic.jpg'},
+  {id:'evebcn', title:'Eve BCN — Barcelona Creative', url:'https://evebcn.com/', category:'Creative • Barcelona • Editorial', price:'₹49,999', color:'bg-[#FF3B30]', desc:'Barcelona studio with editorial scroll, image reveal warp.', image:'EVE', preview:'previews/eve-bcn.jpg'},
+  {id:'drinksom', title:'Drink SOM — Beverage 3D', url:'https://www.drinksom.eu/?ref=landing.love', category:'Beverage • Liquid • Morph', price:'₹39,999', color:'bg-[#FFD60A]', desc:'Drink brand with liquid morph scroll, bottle 3D parallax.', image:'SOM', preview:'previews/drinksom.jpg'},
+  {id:'framerai', title:'Framer AI — AI Website Builder', url:'https://www.framer.com/ai/?via=uizun6r&dub_id=tkVFCcrkmdJBKBWe', category:'SaaS • AI • Framer', price:'₹69,999', color:'bg-white', desc:'Framer AI page with prompt-to-site scroll demo.', image:'AI', preview:'previews/framer-ai.jpg'},
+  {id:'lightweight', title:'Lightweight — Info 3D Scroll', url:'https://lightweight.info/en?ref=landing.love', category:'Info • Light • Parallax', price:'₹34,999', color:'bg-paper', desc:'Lightweight info site with feather-light parallax.', image:'LIGHT', preview:'previews/lightweight.jpg'},
+  {id:'cominvi', title:'Cominvi — Mexico Construction', url:'https://www.cominvi.com.mx/', category:'Construction • Mexico', price:'₹44,999', color:'bg-[#8A5CFF]', desc:'Mexican construction with concrete texture scroll.', image:'COM', preview:'previews/cominvi.jpg'},
+  {id:'ajbury', title:'AJ Bury — Portfolio 3D', url:'https://ajbury.com/', category:'Portfolio • Architect • Minimal', price:'₹49,999', color:'bg-ink', desc:'Architect portfolio with minimal scroll, image sequence.', image:'AJ', preview:'previews/ajbury.jpg'},
+  {id:'infinity', title:'Infinity Signal — Tech Stack UK', url:'https://infinitytechstack.uk/infinity-signal', category:'Tech • UK • WebGL', price:'₹59,999', color:'bg-[#00D9FF]', desc:'UK tech with signal wave WebGL scroll.', image:'INF', preview:'previews/infinity-signal.jpg'},
+  {id:'layr', title:'Layr Media — Agency 3D', url:'https://layrmedia.com/', category:'Agency • Media • Horizontal', price:'₹54,999', color:'bg-[#FF006B]', desc:'Media agency with horizontal scroll journey.', image:'LAYR', preview:'previews/layr-media.jpg'},
+  {id:'peregrine', title:'Peregrine — Slovakia Creative', category:'Creative • Slovakia', price:'₹39,999', color:'bg-[#0A0A0B]', desc:'Slovakia studio with falcon flight scroll metaphor.', image:'PERE', preview:'previews/peregrine.jpg', url:'https://peregrine.sk/'},
+  {id:'qualityglass', title:'Quality Glass — Glass Morph', category:'Glass • Morph • Vercel', price:'₹29,999', color:'bg-[#D6FF57]', desc:'Glass morphism website with blur scroll, Raebareli local ready.', image:'GLASS', preview:'previews/quality-glass.jpg', url:'https://quality-glass-website.vercel.app/'},
+];
+
+const featuredGrid = document.getElementById('featured-grid');
+
+// Try to load from Insforge backend first, fallback to local
+async function loadFeaturedFromBackend() {
+  try {
+    if(window.KaatyaBackend) {
+      const backendSites = await window.KaatyaBackend.getFeaturedWebsites();
+      if(backendSites && backendSites.length > 0) {
+        console.log('✅ Loaded', backendSites.length, 'featured from Insforge backend');
+        // Map backend format to frontend format
+        realWebsites = backendSites.map(s => ({
+          id: s.id,
+          title: s.title,
+          url: s.url,
+          category: s.category,
+          price: s.price,
+          desc: s.description,
+          description: s.description,
+          image: s.image,
+          preview: s.preview,
+          color: s.color,
+          display_order: s.display_order
+        })).sort((a,b)=> (a.display_order||0)-(b.display_order||0));
+      }
+    }
+  } catch(e) { console.warn('Backend featured load failed, using fallback', e); }
+  renderFeaturedWebsites();
+}
+
+function renderFeaturedWebsites(){
+  if(!featuredGrid) return;
+  featuredGrid.innerHTML = '';
+  // Update count badge if exists
+  const countEl = document.getElementById('featured-count');
+  if(countEl) countEl.textContent = realWebsites.length;
+  realWebsites.forEach((site,i)=>{
+    const previewImg = site.preview || '';
+    const el = document.createElement('div');
+    el.className = 'group glass rounded-[24px] overflow-hidden hover:border-lime/40 transition border border-white/5 bg-[#121214] flex flex-col';
+    el.innerHTML = `
+      <div class="h-[300px] relative overflow-hidden bg-black">
+        ${previewImg ? `<img src="${previewImg}" alt="${site.title}" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-700">` : `<div class="absolute inset-0 ${site.color} grid place-items-center font-syne font-800 text-[8vw] opacity-30">${site.image}</div>`}
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
+        <div class="absolute top-4 left-4 flex gap-2">
+          <span class="px-3 py-1 bg-lime text-ink rounded-full font-mono text-[10px] font-700">★ FEATURED #${i+1}</span>
+          <span class="px-3 py-1 bg-white/90 backdrop-blur text-ink rounded-full font-mono text-[10px] font-700">LIVE 3D</span>
+        </div>
+        <div class="absolute top-4 right-4 w-10 h-10 bg-white rounded-full grid place-items-center group-hover:rotate-45 transition shadow-lg">↗</div>
+        <div class="absolute top-[56px] left-4 right-4 h-8 bg-white/95 backdrop-blur rounded-full flex items-center gap-2 px-3 shadow">
+          <div class="flex gap-1"><div class="w-2 h-2 bg-red-400 rounded-full"></div><div class="w-2 h-2 bg-yellow-400 rounded-full"></div><div class="w-2 h-2 bg-green-400 rounded-full"></div></div>
+          <div class="flex-1 text-[9px] font-mono truncate ml-2 opacity-60">${site.url.replace('https://','').substring(0,30)}</div>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 p-4">
+          <div class="flex justify-between items-end gap-2">
+            <div class="px-2.5 py-1 bg-black/70 backdrop-blur text-white rounded-full font-mono text-[9px] max-w-[65%] truncate">${site.category}</div>
+            <div class="px-3 py-1 bg-lime text-ink rounded-full font-mono text-[11px] font-700 shrink-0">${site.price}</div>
+          </div>
+        </div>
+        <!-- Hover overlay with live iframe hint -->
+        <div class="absolute inset-0 bg-ink/90 opacity-0 group-hover:opacity-100 transition duration-300 grid place-items-center p-6 text-center">
+          <div>
+            <div class="font-syne font-700 text-xl text-white">Live Preview</div>
+            <div class="font-mono text-[11px] opacity-60 mt-2 text-white">Click to see fullscreen 3D breakdown + live iframe</div>
+            <button onclick="openSitePreview('${site.id}')" class="mt-4 px-6 py-2.5 bg-lime text-ink rounded-full font-mono text-[11px] font-700">OPEN PREVIEW →</button>
+          </div>
+        </div>
+      </div>
+      <div class="p-5 bg-ink flex-1 flex flex-col">
+        <h3 class="font-syne font-700 text-[17px] leading-tight">${site.title}</h3>
+        <p class="font-mono text-[11px] opacity-60 mt-2 leading-relaxed line-clamp-2 flex-1">${site.desc}</p>
+        <div class="mt-3 flex items-center gap-2 font-mono text-[9px] opacity-40"><span>🔗</span><span class="truncate">${site.url}</span></div>
+        <div class="mt-4 grid grid-cols-2 gap-2">
+          <button onclick="window.open('${site.url}','_blank')" class="py-2.5 bg-white text-ink rounded-full font-mono text-[11px] font-700 hover:bg-lime transition">LIVE ↗</button>
+          <button onclick="openSitePreview('${site.id}')" class="py-2.5 border border-white/20 rounded-full font-mono text-[11px] hover:bg-white hover:text-ink transition">PREVIEW</button>
+        </div>
+        <button onclick="orderTemplate('${site.title}','${site.price}')" class="w-full mt-2 py-2.5 bg-lime/10 text-lime border border-lime/20 rounded-full font-mono text-[10px] font-700 hover:bg-lime hover:text-ink transition">ORDER SAME STYLE → ${site.price}</button>
+      </div>
+    `;
+    featuredGrid.appendChild(el);
+  });
+}
+loadFeaturedFromBackend(); // initial load from Insforge, fallback to local
+
+window.openSitePreview = (id) => {
+  const site = realWebsites.find(s=>s.id===id);
+  if(!site) return;
+  const modal = document.getElementById('demo-modal');
+  document.getElementById('demo-title').textContent = site.title;
+  document.getElementById('demo-tag').textContent = '★ FEATURED • ' + site.category + ' • LIVE 3D SCROLL • PREVIEW OVER WEBSITE';
+  const stage = document.getElementById('demo-stage');
+  stage.innerHTML = `
+    <div class="max-w-[1200px] mx-auto">
+      <div class="glass rounded-[32px] p-6 md:p-10">
+        <div class="flex flex-wrap justify-between gap-6">
+          <div><div class="font-mono text-[11px] tracking-widest opacity-60">FEATURED WEBSITE PREVIEW — KAATYA WEB DEVELOPER • RAEBARELI • Insta @_kaatya_og_</div><h2 class="font-syne font-800 text-[28px] md:text-[40px] leading-[0.9] mt-4">${site.title}</h2><p class="font-mono text-[12px] opacity-70 mt-4 max-w-[520px]">${site.desc}<br><br>Real URL: <a href="${site.url}" target="_blank" class="text-lime underline">${site.url}</a><br>This exact 3D scroll style I can build for your brand in Raebareli. Preview below shows actual live site in iframe + screenshot.</p></div>
+          <div class="text-right"><div class="font-syne font-800 text-3xl">${site.price}</div><div class="font-mono text-[11px] opacity-60">${site.category}</div><div class="mt-4 flex flex-col gap-2"><button onclick="window.open('${site.url}','_blank')" class="px-6 py-3 bg-white text-ink rounded-full font-mono text-[11px] font-700">VISIT LIVE SITE ↗</button><button onclick="orderTemplate('${site.title}','${site.price}'); closeDemo(); document.getElementById('order').scrollIntoView({behavior:'smooth'})" class="px-6 py-3 bg-lime text-ink rounded-full font-mono text-[11px] font-700">ORDER SAME →</button></div></div>
+        </div>
+        
+        <div class="mt-8 grid lg:grid-cols-[1.1fr_0.9fr] gap-6">
+          <div class="space-y-4">
+            <div class="font-mono text-[11px] tracking-widest">📸 SCREENSHOT PREVIEW — Visible in app preview</div>
+            <div class="rounded-[24px] overflow-hidden border border-white/10 bg-black">
+              <div class="h-10 bg-[#1A1A1D] flex items-center gap-2 px-4"><div class="flex gap-1.5"><div class="w-3 h-3 bg-red-500 rounded-full"></div><div class="w-3 h-3 bg-yellow-500 rounded-full"></div><div class="w-3 h-3 bg-green-500 rounded-full"></div></div><div class="flex-1 text-center font-mono text-[11px] opacity-50 truncate">${site.url}</div></div>
+              ${site.preview ? `<img src="${site.preview}" alt="${site.title}" class="w-full h-[400px] object-cover">` : `<div class="h-[400px] ${site.color} grid place-items-center font-syne font-800 text-[10vw] opacity-20">${site.image}</div>`}
+            </div>
+            <div class="p-4 bg-lime/10 rounded-xl font-mono text-[11px]">✓ This screenshot preview is visible directly over your website — no iframe needed. Generated for ${site.title}.</div>
+          </div>
+          
+          <div class="space-y-4">
+            <div class="font-mono text-[11px] tracking-widest">🌐 LIVE IFRAME PREVIEW — Works when downloaded / live domain</div>
+            <div class="rounded-[24px] overflow-hidden border border-white/10 bg-black h-[460px] relative">
+              <div class="h-10 bg-[#1A1A1D] flex items-center justify-between px-4"><div class="flex gap-1.5"><div class="w-3 h-3 bg-red-500 rounded-full"></div><div class="w-3 h-3 bg-yellow-500 rounded-full"></div><div class="w-3 h-3 bg-green-500 rounded-full"></div></div><div class="font-mono text-[10px] opacity-50">LIVE: ${site.url.replace('https://','').substring(0,25)}</div><div class="w-6 h-6 bg-white/10 rounded-full grid place-items-center">↗</div></div>
+              <iframe src="${site.url}" class="w-full h-[420px] border-0 bg-white" loading="lazy" sandbox="allow-scripts allow-same-origin allow-popups" onerror="this.style.display='none'"></iframe>
+              <div class="absolute inset-0 top-10 grid place-items-center bg-ink/90 p-6 text-center pointer-events-none iframe-fallback">
+                <div><div class="font-syne font-700 text-white">Live site iframe</div><div class="font-mono text-[11px] opacity-60 mt-2 text-white">If iframe is blocked (X-Frame-Options), click VISIT LIVE SITE button above.<br>In downloaded version / live domain, iframe will load.<br>In app preview (no network), screenshot above is shown.</div><button onclick="window.open('${site.url}','_blank')" class="mt-4 px-6 py-2 bg-lime text-ink rounded-full font-mono text-[11px] font-700 pointer-events-auto">OPEN LIVE SITE ↗</button></div>
+              </div>
+            </div>
+            <div class="p-4 bg-white/5 rounded-xl">
+              <div class="font-mono text-[11px] tracking-widest opacity-60">SCROLL SYSTEM BREAKDOWN</div>
+              <div class="mt-3 space-y-2 font-mono text-[11px]"><div>✓ Parallax depth: ${site.category.includes('Parallax')||site.category.includes('3D')?'Yes':'Yes — multi-layer'}</div><div>✓ Sticky stack: ${site.category.includes('Stack')?'Yes':'Yes — cards pin'}</div><div>✓ Horizontal: ${site.category.includes('Horizontal')?'Yes':'Optional'}</div><div>✓ WebGL: ${site.category.includes('WebGL')?'Yes — shaders':'GSAP + Lenis'}</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-8 grid md:grid-cols-3 gap-4">
+          <div class="p-5 bg-white/5 rounded-2xl"><div class="font-mono text-[11px] opacity-60">SCROLL SYSTEM</div><div class="font-600 mt-2 text-[13px]">Parallax • Sticky Stack • Horizontal • WebGL • Pin & Reveal — same as ${site.url.replace('https://','')}</div></div>
+          <div class="p-5 bg-white/5 rounded-2xl"><div class="font-mono text-[11px] opacity-60">BUILD TIME</div><div class="font-600 mt-2">48h prototype • 5 days live • 90+ Lighthouse • From Raebareli</div></div>
+          <div class="p-5 bg-lime text-ink rounded-2xl"><div class="font-mono text-[11px]">ORDER SAME</div><div class="font-700 mt-2">${site.price} • UPI 8957288848@fam only at payment</div><div class="font-mono text-[10px] opacity-70 mt-1">DM @_kaatya_og_ • vishishthgaurlittle@gmail.com</div></div>
+        </div>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <button onclick="document.getElementById('order').scrollIntoView({behavior:'smooth'}); closeDemo(); orderTemplate('${site.title}','${site.price}')" class="flex-1 py-4 bg-lime text-ink rounded-full font-mono text-[12px] font-700">ORDER SAME STYLE → ${site.price}</button>
+          <button onclick="window.open('${site.url}','_blank')" class="px-8 py-4 border border-white/20 rounded-full font-mono text-[12px]">VISIT LIVE SITE ↗</button>
+          <button onclick="closeDemo()" class="px-8 py-4 bg-white/10 rounded-full font-mono text-[12px]">CLOSE</button>
+        </div>
+      </div>
+    </div>
+  `;
+  modal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  if(typeof lenis!=='undefined') lenis.stop();
+};
+
+// Templates - Now from Insforge backend
+let templatesData = [
+  { id:'t1', name:'OBYS AGENCY CLONE', category:'PORTFOLIO', price:'₹34,999', color:'bg-[#0A0A0B] text-paper', live_url:'https://obys.agency', live:'https://obys.agency', features:['Horizontal + Vertical','Text Morph'], desc:'Brutalist agency', description:'Brutalist agency' },
+  { id:'t2', name:'LOCOMOTIVE STUDIO', category:'CREATIVE', price:'₹39,999', color:'bg-lime text-ink', live_url:'https://locomotive.ca', live:'https://locomotive.ca', features:['Parallax Layers','Smooth Scroll'], desc:'Fluid scroll', description:'Fluid scroll' },
+  { id:'t3', name:'BRUNO SIMON 3D WORLD', category:'WEBGL', price:'₹89,999', color:'bg-violet text-white', live_url:'https://bruno-simon.com', live:'https://bruno-simon.com', features:['Three.js World','Physics'], desc:'Drive car in 3D world', description:'Drive car in 3D world' },
+  { id:'t4', name:'APPLE AIRPODS SCROLL', category:'PRODUCT', price:'₹44,999', color:'bg-white text-ink', live_url:'https://www.apple.com/airpods-pro/', live:'https://www.apple.com/airpods-pro/', features:['Canvas Sequence','Sticky'], desc:'Apple style reveal', description:'Apple style reveal' },
+];
+const templatesGrid = document.getElementById('templates-grid');
+function renderTemplates() {
+  if(!templatesGrid) return;
+  templatesGrid.innerHTML='';
+  templatesData.forEach((t,i) => {
+    const live = t.live_url || t.live;
+    const desc = t.description || t.desc;
+    const el = document.createElement('div');
+    el.className = `${t.color} p-6 md:p-8 min-h-[340px] flex flex-col justify-between group hover:opacity-90 transition cursor-pointer`;
+    el.innerHTML = `<div><div class="font-mono text-[10px] px-3 py-1 bg-black/10 rounded-full inline-block">${t.category}</div><h3 class="font-syne font-800 text-[24px] leading-[0.9] mt-6">${t.name}</h3><p class="font-mono text-[11px] opacity-70 mt-2">${desc}</p><div class="mt-3 flex flex-wrap gap-1">${(t.features||[]).map(f=>`<span class="px-2 py-1 bg-black/10 rounded-full font-mono text-[8px]">${f}</span>`).join('')}</div></div><div class="flex justify-between items-center mt-6"><div class="font-syne font-800">${t.price}</div><button onclick="window.open('${live}','_blank')" class="px-4 py-2 bg-ink text-paper rounded-full font-mono text-[10px]">LIVE ↗</button></div>`;
+    templatesGrid.appendChild(el);
+  });
+}
+async function loadTemplatesFromBackend() {
+  try {
+    if(window.KaatyaBackend) {
+      const backend = await window.KaatyaBackend.getTemplates();
+      if(backend && backend.length > 0) {
+        console.log('✅ Loaded', backend.length, 'templates from Insforge');
+        templatesData = backend.map(t => ({
+          id: t.id,
+          name: t.name,
+          category: t.category,
+          price: t.price,
+          color: t.color,
+          live_url: t.live_url,
+          live: t.live_url,
+          features: t.features || [],
+          desc: t.description,
+          description: t.description
+        }));
+      }
+    }
+  } catch(e) { console.warn('Templates backend failed', e); }
+  renderTemplates();
+}
+loadTemplatesFromBackend();
+window.orderTemplate = (name, price) => {
+  document.getElementById('order').scrollIntoView({behavior:'smooth'});
+  const vision = document.querySelector('textarea[name="vision"]');
+  if (vision) vision.value = `I want: ${name} - ${price}. Like ${realWebsites[0].url} etc.`;
+  if(typeof nextStep==='function') nextStep(3);
+  setTimeout(()=>{ const el=document.getElementById('estimatedTotal'); if(el) el.textContent = price; }, 300);
+};
+</script>
+<script src="js/main.js"></script>
+</body>
+</html>
