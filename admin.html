@@ -455,58 +455,102 @@ async function syncFromBackend() {
   }
 }
 
-// ===== AUTH GUARD - Multi User Support — FIXED LOOP =====
+// ===== AUTH GUARD - Multi User Support — FIXED LOOP v3 NO AUTO REDIRECT =====
 async function checkAuth() {
   const auth = window.KaatyaAuth;
+  // Create banner for auth status
+  const banner = document.createElement('div');
+  banner.id = 'auth-banner';
+  banner.className = 'fixed top-0 left-0 w-full z-[100] p-3 text-center font-mono text-[11px] hidden';
+  document.body.prepend(banner);
+  function showBanner(msg, type='error'){
+    banner.textContent = msg;
+    banner.className = `fixed top-0 left-0 w-full z-[100] p-3 text-center font-mono text-[11px] ${type==='error'?'bg-red-500 text-white':'bg-lime text-ink'}`;
+    banner.classList.remove('hidden');
+    console.log('AUTH BANNER:', msg);
+  }
+
   if(!auth) {
-    console.warn('Auth not loaded, redirecting to login');
-    localStorage.setItem('last_admin_redirect', Date.now().toString());
-    window.location.href = 'admin-login.html';
+    console.warn('Auth not loaded');
+    showBanner('⚠️ Auth system not loaded — redirecting to login in 3s', 'error');
+    setTimeout(()=>{ window.location.href = 'admin-login.html'; }, 3000);
     return false;
   }
   
   if(!auth.isLoggedIn()) {
-    console.log('Not logged in, redirect to login');
-    localStorage.setItem('last_admin_redirect', Date.now().toString());
-    window.location.href = 'admin-login.html';
-    return false;
-  }
-
-  // Try to get current user from backend — but don't instantly clear on failure (prevents loop)
-  let currentUser = null;
-  try {
-    currentUser = await auth.getCurrentUser();
-  } catch(e) {
-    console.warn('getCurrentUser threw', e);
-  }
-  if(!currentUser) {
-    console.log('Session expired or backend unreachable — checking local fallback');
-    // Fallback: if we have local user/profile and token, allow admin for now and retry later (prevents flicker loop)
-    const localUser = auth.user;
+    console.log('Not logged in — no token');
+    // Check if we have any local user as emergency fallback
+    const localUser = JSON.parse(localStorage.getItem('kaatya_user') || 'null');
     const localProfile = JSON.parse(localStorage.getItem('kaatya_profile') || 'null');
     if(localUser && localProfile){
-      console.log('Using local fallback profile, allowing admin access');
-      currentUser = localUser;
-      // Don't clear, allow page to load, retry in background after 3s
-      setTimeout(async ()=>{
-        const retry = await auth.getCurrentUser();
-        if(!retry){
-          console.log('Retry still failed — forcing logout');
-          auth.clearSession();
-          localStorage.setItem('last_admin_redirect', Date.now().toString());
-          window.location.href = 'admin-login.html';
-        }
-      }, 3000);
+      console.log('Found local user, allowing offline access');
+      showBanner(`⚠️ Offline mode — using cached login for ${localProfile.email} — backend unreachable, but admin stays open`, 'error');
+      // Continue to load profile from local
+      window.KaatyaAuth.user = localUser;
+      window.KaatyaAuth.profile = localProfile;
+      // Don't redirect, allow
     } else {
-      console.log('No local fallback, redirect to login');
-      auth.clearSession();
+      console.log('No local user, redirect to login');
       localStorage.setItem('last_admin_redirect', Date.now().toString());
       window.location.href = 'admin-login.html';
       return false;
     }
   } else {
-    // Clear loop marker on success
+    console.log('Token found, checking backend...');
+  }
+
+  // Try to get current user from backend — but NEVER auto-logout on failure, just warn
+  let currentUser = null;
+  let backendError = null;
+  try {
+    currentUser = await auth.getCurrentUser();
+    console.log('getCurrentUser result:', currentUser);
+  } catch(e) {
+    backendError = e.message;
+    console.warn('getCurrentUser threw', e);
+  }
+  
+  if(!currentUser) {
+    console.log('Backend check failed, error:', backendError);
+    const localUser = auth.user || JSON.parse(localStorage.getItem('kaatya_user') || 'null');
+    const localProfile = JSON.parse(localStorage.getItem('kaatya_profile') || 'null') || auth.profile;
+    
+    if(localUser && localProfile){
+      console.log('Using local fallback profile, allowing admin access — NO REDIRECT');
+      showBanner(`⚠️ Backend unreachable (${backendError || 'session check failed'}) — using cached login ${localProfile.email} as ${localProfile.role.toUpperCase()} — Admin stays open. If you want to re-login, logout manually.`, 'error');
+      currentUser = localUser;
+      // Keep local profile
+      auth.user = localUser;
+      auth.profile = localProfile;
+      // Try background refresh every 10s, but never force logout
+      let retryCount = 0;
+      const retryInterval = setInterval(async ()=>{
+        retryCount++;
+        if(retryCount > 6) { clearInterval(retryInterval); return; }
+        console.log(`Retry ${retryCount} getCurrentUser...`);
+        const retry = await auth.getCurrentUser();
+        if(retry){
+          console.log('Retry success, backend now reachable');
+          clearInterval(retryInterval);
+          banner.classList.add('hidden');
+          localStorage.removeItem('last_admin_redirect');
+        }
+      }, 10000);
+    } else {
+      console.log('No local fallback, must login');
+      showBanner('❌ No cached login found — redirecting to login in 2s...', 'error');
+      setTimeout(()=>{
+        auth.clearSession();
+        localStorage.setItem('last_admin_redirect', Date.now().toString());
+        window.location.href = 'admin-login.html';
+      }, 2000);
+      return false;
+    }
+  } else {
+    // Success — clear loop marker
     localStorage.removeItem('last_admin_redirect');
+    banner.classList.add('hidden');
+    console.log('✅ Backend auth success, user:', currentUser.email);
   }
 
   // Load profile
