@@ -39,10 +39,10 @@ class KaatyaAuth {
     localStorage.removeItem('kaatya_profile');
   }
 
-  // Sign Up
+  // Sign Up — use mobile client_type to get refreshToken directly (fix Vercel cross-origin cookie issue)
   async signUp(email, password, displayName) {
     try {
-      const res = await fetch(`${AUTH_URL}/api/auth/users`, {
+      const res = await fetch(`${AUTH_URL}/api/auth/users?client_type=mobile`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -72,10 +72,10 @@ class KaatyaAuth {
     }
   }
 
-  // Sign In
+  // Sign In — use mobile client_type to get refreshToken directly
   async signIn(email, password) {
     try {
-      const res = await fetch(`${AUTH_URL}/api/auth/sessions`, {
+      const res = await fetch(`${AUTH_URL}/api/auth/sessions?client_type=mobile`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -121,7 +121,7 @@ class KaatyaAuth {
     }
   }
 
-  // Get current user from token
+  // Get current user from token — with refresh retry
   async getCurrentUser() {
     if(!this.accessToken) return null;
     try {
@@ -130,13 +130,44 @@ class KaatyaAuth {
           'Authorization': `Bearer ${this.accessToken}`
         }
       });
-      if(!res.ok) throw new Error('Not authenticated');
+      if(!res.ok) {
+        // Try refresh if 401
+        if(res.status === 401 && this.refreshToken){
+          console.log('Access token expired, trying refresh...');
+          const refreshed = await this.refreshSession();
+          if(refreshed){
+            const retry = await fetch(`${AUTH_URL}/api/auth/sessions/current`, {
+              headers: { 'Authorization': `Bearer ${this.accessToken}` }
+            });
+            if(retry.ok){
+              const data = await retry.json();
+              return data.user || data;
+            }
+          }
+        }
+        throw new Error('Not authenticated');
+      }
       const data = await res.json();
       return data.user || data;
     } catch(e) {
       console.warn('getCurrentUser failed', e);
       return null;
     }
+  }
+
+  async refreshSession(){
+    if(!this.refreshToken) return false;
+    try{
+      const res = await fetch(`${AUTH_URL}/api/auth/refresh?client_type=mobile`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken: this.refreshToken })
+      });
+      if(!res.ok) return false;
+      const data = await res.json();
+      this.saveSession(data);
+      return true;
+    }catch(e){ return false; }
   }
 
   // Check if this is first user (no profiles)

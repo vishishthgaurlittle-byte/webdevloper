@@ -206,8 +206,8 @@ async function handleOAuthCallback() {
     successEl.textContent = `⏳ Verifying ${provider} login...`;
     successEl.classList.remove('hidden');
     
-    // Exchange code for tokens
-    const res = await fetch(`${OAUTH_BACKEND}/api/auth/oauth/exchange`, {
+    // Exchange code for tokens — use client_type=mobile to get refreshToken directly (avoid httpOnly cookie cross-origin issue on Vercel)
+    const res = await fetch(`${OAUTH_BACKEND}/api/auth/oauth/exchange?client_type=mobile`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -241,11 +241,12 @@ async function handleOAuthCallback() {
     // Clean storage
     localStorage.removeItem('oauth_code_verifier');
     localStorage.removeItem('oauth_provider');
+    localStorage.removeItem('last_admin_redirect');
     window.history.replaceState({}, '', window.location.pathname);
     
     successEl.textContent = `✅ Welcome ${profile?.display_name || data.user.email} via ${provider} — Redirecting...`;
     
-    setTimeout(()=> window.location.href = 'admin.html', 1000);
+    setTimeout(()=> window.location.href = 'admin.html', 1200);
     
   } catch(e) {
     console.error('OAuth exchange failed', e);
@@ -281,9 +282,36 @@ handleOAuthCallback();
     signupForm.classList.remove('hidden'); signinForm.classList.add('hidden');
   });
 
-  if(window.KaatyaAuth && window.KaatyaAuth.isLoggedIn()) {
-    window.location.href = 'admin.html';
-  }
+  // FIX LOOP: Don't auto-redirect if OAuth callback in progress or just came from admin (loop detection)
+  (function preventLoop(){
+    const params = new URLSearchParams(window.location.search);
+    const hasOAuthCode = params.has('insforge_code');
+    const lastRedirect = localStorage.getItem('last_admin_redirect');
+    const now = Date.now();
+    // If we were redirected from admin within 3 sec, stop loop and show message
+    if(lastRedirect && (now - parseInt(lastRedirect)) < 3000 && !hasOAuthCode){
+      console.warn('Loop detected: admin -> login bounce within 3s, stopping');
+      localStorage.removeItem('last_admin_redirect');
+      document.getElementById('signin-error').textContent = '⚠️ Session check failed — please sign in again. If loop continues, clear cache.';
+      document.getElementById('signin-error').classList.remove('hidden');
+      return;
+    }
+    if(hasOAuthCode){
+      console.log('OAuth code present, skipping auto-redirect to admin, waiting for exchange');
+      return;
+    }
+    if(window.KaatyaAuth && window.KaatyaAuth.isLoggedIn()) {
+      // Verify token still valid before redirect to avoid loop
+      window.KaatyaAuth.getCurrentUser().then(user=>{
+        if(user){
+          window.location.href = 'admin.html';
+        } else {
+          console.log('Stored token invalid, staying on login page');
+          window.KaatyaAuth.clearSession();
+        }
+      });
+    }
+  })();
 
   signinForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -299,6 +327,7 @@ handleOAuthCallback();
     const result = await window.KaatyaAuth.signIn(email, password);
     
     if(result.success) {
+      localStorage.removeItem('last_admin_redirect');
       successEl.textContent = `Welcome back — Redirecting...`;
       successEl.classList.remove('hidden');
       setTimeout(()=> window.location.href = 'admin.html', 800);
@@ -337,6 +366,7 @@ handleOAuthCallback();
     const result = await window.KaatyaAuth.signUp(email, password, name);
 
     if(result.success) {
+      localStorage.removeItem('last_admin_redirect');
       successEl.textContent = `Account created — Redirecting to dashboard...`;
       successEl.classList.remove('hidden');
       setTimeout(()=> window.location.href = 'admin.html', 1000);

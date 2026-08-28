@@ -455,28 +455,58 @@ async function syncFromBackend() {
   }
 }
 
-// ===== AUTH GUARD - Multi User Support =====
+// ===== AUTH GUARD - Multi User Support — FIXED LOOP =====
 async function checkAuth() {
   const auth = window.KaatyaAuth;
   if(!auth) {
     console.warn('Auth not loaded, redirecting to login');
+    localStorage.setItem('last_admin_redirect', Date.now().toString());
     window.location.href = 'admin-login.html';
     return false;
   }
   
   if(!auth.isLoggedIn()) {
     console.log('Not logged in, redirect to login');
+    localStorage.setItem('last_admin_redirect', Date.now().toString());
     window.location.href = 'admin-login.html';
     return false;
   }
 
-  // Try to get current user from backend
-  const currentUser = await auth.getCurrentUser();
+  // Try to get current user from backend — but don't instantly clear on failure (prevents loop)
+  let currentUser = null;
+  try {
+    currentUser = await auth.getCurrentUser();
+  } catch(e) {
+    console.warn('getCurrentUser threw', e);
+  }
   if(!currentUser) {
-    console.log('Session expired, redirect to login');
-    auth.clearSession();
-    window.location.href = 'admin-login.html';
-    return false;
+    console.log('Session expired or backend unreachable — checking local fallback');
+    // Fallback: if we have local user/profile and token, allow admin for now and retry later (prevents flicker loop)
+    const localUser = auth.user;
+    const localProfile = JSON.parse(localStorage.getItem('kaatya_profile') || 'null');
+    if(localUser && localProfile){
+      console.log('Using local fallback profile, allowing admin access');
+      currentUser = localUser;
+      // Don't clear, allow page to load, retry in background after 3s
+      setTimeout(async ()=>{
+        const retry = await auth.getCurrentUser();
+        if(!retry){
+          console.log('Retry still failed — forcing logout');
+          auth.clearSession();
+          localStorage.setItem('last_admin_redirect', Date.now().toString());
+          window.location.href = 'admin-login.html';
+        }
+      }, 3000);
+    } else {
+      console.log('No local fallback, redirect to login');
+      auth.clearSession();
+      localStorage.setItem('last_admin_redirect', Date.now().toString());
+      window.location.href = 'admin-login.html';
+      return false;
+    }
+  } else {
+    // Clear loop marker on success
+    localStorage.removeItem('last_admin_redirect');
   }
 
   // Load profile
