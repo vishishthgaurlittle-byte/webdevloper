@@ -107,7 +107,7 @@
 
   </div>
 
-  <div class="text-center mt-6 font-mono text-[9px] tracking-widest opacity-20">KAATYA WEB DEVELOPER • RAEBARELI • SECURE STUDIO</div>
+  <div class="text-center mt-6 font-mono text-[9px] tracking-widest opacity-20">KAATYA WEB DEVELOPER • RAEBARELI • SECURE STUDIO • v2.1-fix-loop + clear-retry • 2026-08-28</div>
 
 </div>
 
@@ -175,38 +175,42 @@ async function handleOAuthCallback() {
   const params = new URLSearchParams(window.location.search);
   const code = params.get('insforge_code');
   const error = params.get('error') || params.get('insforge_error');
+  const errorEl = document.getElementById('signin-error');
+  const successEl = document.getElementById('signin-success');
   
   if(error) {
     console.error('OAuth error:', error);
-    document.getElementById('signin-error').textContent = '❌ OAuth failed: ' + error;
-    document.getElementById('signin-error').classList.remove('hidden');
-    // Clean URL
+    errorEl.innerHTML = `❌ OAuth failed: ${error}<br><br><button onclick="clearOAuthAndRetry()" class="mt-2 px-4 py-2 bg-ink text-paper rounded-full text-[11px]">Try Again →</button>`;
+    errorEl.classList.remove('hidden');
     window.history.replaceState({}, '', window.location.pathname);
+    localStorage.removeItem('oauth_code_verifier');
     return;
   }
   
   if(!code) return; // Not a callback
   
-  console.log('Handling OAuth callback, code:', code.substring(0,20)+'...');
+  console.log('🔵 Handling OAuth callback, code:', code.substring(0,20)+'...', 'URL:', window.location.href);
   
   const codeVerifier = localStorage.getItem('oauth_code_verifier');
   const provider = localStorage.getItem('oauth_provider') || 'google';
   
+  // Show verifying UI immediately
+  errorEl.classList.add('hidden');
+  successEl.innerHTML = `⏳ <b>Google login detected!</b><br>Code: ${code.substring(0,12)}...<br>Verifier: ${codeVerifier ? 'found ✅' : 'MISSING ❌'}<br>Provider: ${provider}<br><br>Exchanging code for session...<br><span class="text-[10px] opacity-60">If stuck, <a href="#" onclick="clearOAuthAndRetry();return false" class="underline">click here to clear and retry</a></span>`;
+  successEl.classList.remove('hidden');
+  
   if(!codeVerifier) {
-    document.getElementById('signin-error').textContent = '❌ OAuth session expired — please try again';
-    document.getElementById('signin-error').classList.remove('hidden');
-    window.history.replaceState({}, '', window.location.pathname);
+    console.error('❌ No code_verifier in localStorage');
+    errorEl.innerHTML = `❌ <b>OAuth session expired</b> — code_verifier not found in localStorage.<br><br>This happens if you opened Google login in different browser/tab, or cleared storage, or Vercel redeployed.<br><br><b>Fix:</b> Click retry and login again.<br><br><button onclick="clearOAuthAndRetry()" class="mt-2 px-5 py-2.5 bg-ink text-paper rounded-full font-mono text-[11px] font-700">🔄 Clear & Try Again</button>`;
+    errorEl.classList.remove('hidden');
+    successEl.classList.add('hidden');
+    // Don't auto-clean URL so user can see code, but provide clear button
     return;
   }
   
   try {
-    const errorEl = document.getElementById('signin-error');
-    const successEl = document.getElementById('signin-success');
-    errorEl.classList.add('hidden');
-    successEl.textContent = `⏳ Verifying ${provider} login...`;
-    successEl.classList.remove('hidden');
-    
-    // Exchange code for tokens — use client_type=mobile to get refreshToken directly (avoid httpOnly cookie cross-origin issue on Vercel)
+    console.log('🔄 Exchanging code with backend:', OAUTH_BACKEND);
+    // Exchange code for tokens — use client_type=mobile to get refreshToken directly
     const res = await fetch(`${OAUTH_BACKEND}/api/auth/oauth/exchange?client_type=mobile`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -216,27 +220,46 @@ async function handleOAuthCallback() {
       })
     });
     
-    const data = await res.json();
-    if(!res.ok) throw new Error(data.message || 'Token exchange failed');
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch { data = { message: text }; }
     
-    console.log('✅ OAuth success:', data.user.email);
+    console.log('Exchange response status:', res.status, 'data:', data);
+    
+    if(!res.ok) {
+      throw new Error(data.message || data.error || `Exchange failed ${res.status}: ${text.substring(0,200)}`);
+    }
+    
+    if(!data.accessToken && !data.user){
+      throw new Error('No accessToken in response: ' + JSON.stringify(data).substring(0,300));
+    }
+    
+    console.log('✅ OAuth success:', data.user?.email, 'has token:', !!data.accessToken);
+    
+    successEl.innerHTML = `✅ <b>Google success!</b> ${data.user?.email}<br>Creating profile...`;
     
     // Save session
     window.KaatyaAuth.saveSession(data);
     
     // Create or get profile
-    let profile = await window.KaatyaAuth.getUserProfile(data.user.id);
+    let profile = null;
+    try {
+      profile = await window.KaatyaAuth.getUserProfile(data.user.id);
+    } catch(e){ console.warn('getUserProfile failed', e); }
+    
     if(!profile) {
-      const isFirst = await window.KaatyaAuth.isFirstUser();
-      const role = isFirst ? 'owner' : 'viewer';
-      profile = await window.KaatyaAuth.createUserProfile(data.user.id, data.user.email, data.user.profile?.name || data.user.email.split('@')[0], role);
-      console.log('Created profile with role:', role);
+      try {
+        const isFirst = await window.KaatyaAuth.isFirstUser();
+        const role = isFirst ? 'owner' : 'viewer';
+        profile = await window.KaatyaAuth.createUserProfile(data.user.id, data.user.email, data.user.profile?.name || data.user.email.split('@')[0], role);
+        console.log('Created profile with role:', role, profile);
+      } catch(e){ console.warn('createUserProfile failed', e); }
     }
     
     if(profile) {
       localStorage.setItem('kaatya_profile', JSON.stringify(profile));
-      localStorage.setItem('kaatya_user', JSON.stringify(data.user));
     }
+    localStorage.setItem('kaatya_user', JSON.stringify(data.user));
     
     // Clean storage
     localStorage.removeItem('oauth_code_verifier');
@@ -244,18 +267,28 @@ async function handleOAuthCallback() {
     localStorage.removeItem('last_admin_redirect');
     window.history.replaceState({}, '', window.location.pathname);
     
-    successEl.textContent = `✅ Welcome ${profile?.display_name || data.user.email} via ${provider} — Redirecting...`;
+    successEl.innerHTML = `✅ <b>Welcome ${profile?.display_name || data.user.email}</b> via ${provider}!<br>Role: ${profile?.role || 'viewer'}<br>Redirecting to admin...`;
     
     setTimeout(()=> window.location.href = 'admin.html', 1200);
     
   } catch(e) {
-    console.error('OAuth exchange failed', e);
-    document.getElementById('signin-error').textContent = '❌ ' + e.message;
-    document.getElementById('signin-error').classList.remove('hidden');
-    document.getElementById('signin-success').classList.add('hidden');
-    window.history.replaceState({}, '', window.location.pathname);
-    localStorage.removeItem('oauth_code_verifier');
+    console.error('❌ OAuth exchange failed', e);
+    errorEl.innerHTML = `❌ <b>Login failed:</b> ${e.message}<br><br><span class="text-[10px] opacity-70">Code: ${code.substring(0,20)}...<br>Verifier: ${codeVerifier ? codeVerifier.substring(0,10)+'...' : 'missing'}<br>Backend: ${OAUTH_BACKEND}</span><br><br><button onclick="clearOAuthAndRetry()" class="px-5 py-2.5 bg-ink text-paper rounded-full font-mono text-[11px] font-700">🔄 Clear & Try Again</button> <button onclick="window.location.href='admin-login.html'" class="px-4 py-2 border border-black/10 rounded-full text-[11px]">Go to Login</button>`;
+    errorEl.classList.remove('hidden');
+    successEl.classList.add('hidden');
+    // Keep verifier for debug, but also provide clear
+    // Don't auto remove verifier immediately — user may want to retry
   }
+}
+
+function clearOAuthAndRetry(){
+  console.log('Clearing OAuth state');
+  localStorage.removeItem('oauth_code_verifier');
+  localStorage.removeItem('oauth_provider');
+  window.history.replaceState({}, '', window.location.pathname);
+  document.getElementById('signin-error').classList.add('hidden');
+  document.getElementById('signin-success').classList.add('hidden');
+  window.location.href = window.location.pathname; // reload clean
 }
 
 // Attach Google/GitHub buttons
